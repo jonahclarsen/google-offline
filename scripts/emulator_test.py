@@ -137,11 +137,12 @@ def exercise_keyboard(prefix=""):
         value = probe_file("input.txt").strip()
         if value == "qwe":
             screenshot(f"{prefix}keyboard-ready.png")
-            adb("shell", "input", "keyevent", "67", "67", "67")
-            for _ in range(20):
-                if not probe_file("input.txt").strip():
+            for _ in range(6):
+                remaining = probe_file("input.txt").strip()
+                if not remaining:
                     return {"passed": True, "actual_typed": value, "attempts": attempt + 1}
-                time.sleep(0.1)
+                adb("shell", "input", "keyevent", *(["67"] * min(len(remaining), 32)))
+                time.sleep(0.5)
             raise RuntimeError("Could not clear readiness keystrokes before speech")
         time.sleep(1)
     raise RuntimeError("Real keyboard taps did not become interactive after startup")

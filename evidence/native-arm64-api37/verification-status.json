@@ -1,0 +1,31 @@
+{
+  "status": "UNVERIFIED: emulator microphone transport did not establish dictation",
+  "apk_sha256": "afbedff3881af822aa0646bd3487edf712f8616360237ce0b7c9c1da4dfa57db",
+  "apk_source_run": "https://github.com/jonahclarsen/google-offline/actions/runs/39098533009",
+  "host": "Native ARM64 Apple Silicon, Hypervisor.Framework",
+  "system_image": "android-37.0/google_apis/arm64-v8a r06",
+  "system_image_sha1": "e007fb23024c59bffdf944b95c61143bc38101ce",
+  "emulator": "37.2.12 build 16428233",
+  "keyboard_typing_observed": true,
+  "offline_dictation_verified": false,
+  "full_scenario_verified": false,
+  "transport_attempts": [
+    {
+      "virtual_audio_card": "VirtioSndCard",
+      "microphone_transport": "gRPC",
+      "initial_failure": "Host emulator SIGSEGV at 0x58 in audio_forwarder_enable when opening injection before the guest recorder",
+      "host_crash_frames": [
+        "audio_forwarder_enable",
+        "android::qemu::QemuAudioInputEngine::start",
+        "QemuAudioInputStream::QemuAudioInputStream",
+        "EmulatorControllerImpl::injectAudio"
+      ],
+      "recorder_first_retry": "Emulator stayed up, but helper recording RMS was 1.288 and no transcript was produced"
+    },
+    {
+      "virtual_audio_card": "Legacy card with VirtioSndCard disabled",
+      "result": "Microphone injection did not finish before deadline; no new complete runtime report"
+    }
+  ],
+  "scope": "This is a test-environment limitation, not an ARM64 Android 17 pass or a Samsung phone verification."
+}
