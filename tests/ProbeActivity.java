@@ -29,8 +29,23 @@ public class ProbeActivity extends Activity {
         });
         setContentView(input);
         saveText("");
+        input.setOnApplyWindowInsetsListener((view, insets) -> {
+            saveFile("ime-visible.txt", Boolean.toString(insets.isVisible(android.view.WindowInsets.Type.ime())));
+            return insets;
+        });
         input.requestFocus();
-        input.postDelayed(() -> ((InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE)).showSoftInput(input, InputMethodManager.SHOW_IMPLICIT), 1000);
+        input.postDelayed(new Runnable() {
+            int attempts;
+            public void run() {
+                ((InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE)).showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
+                android.view.WindowInsets insets = input.getRootWindowInsets();
+                if (++attempts < 10 && (insets == null || !insets.isVisible(android.view.WindowInsets.Type.ime()))) input.postDelayed(this, 2000);
+            }
+        }, 1000);
+        if (getIntent().getBooleanExtra("check_network", false)) {
+            new File(getExternalFilesDir(null), "network-control.json").delete();
+            new Thread(this::checkNetwork).start();
+        }
         if (getIntent().getBooleanExtra("record_audio", false)) {
             input.postDelayed(() -> new Thread(this::recordControl).start(), 500);
         }
@@ -55,11 +70,35 @@ public class ProbeActivity extends Activity {
     }
 
     private void saveText(String text) {
+        saveFile("input.txt", text);
+    }
+
+    private void saveFile(String name, String text) {
         try {
-            File temporary = new File(getExternalFilesDir(null), "input.tmp");
+            File temporary = new File(getExternalFilesDir(null), name + ".tmp");
             try (FileWriter writer = new FileWriter(temporary)) { writer.write(text); }
-            temporary.renameTo(new File(getExternalFilesDir(null), "input.txt"));
+            temporary.renameTo(new File(getExternalFilesDir(null), name));
         } catch (Exception error) { android.util.Log.e("OfflineProbe", "Cannot save actual editor text", error); }
+    }
+
+    private void checkNetwork() {
+        JSONObject result = new JSONObject();
+        java.net.HttpURLConnection connection = null;
+        try {
+            result.put("url", "https://example.com/");
+            connection = (java.net.HttpURLConnection)new java.net.URL("https://example.com/").openConnection();
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(5000);
+            int code = connection.getResponseCode();
+            result.put("status", code);
+            result.put("success", code == 200);
+        } catch (Exception error) {
+            try { result.put("success", false); result.put("error", error.getClass().getSimpleName()); }
+            catch (Exception ignored) {}
+        } finally {
+            if (connection != null) connection.disconnect();
+            saveFile("network-control.json", result.toString());
+        }
     }
 
     private void recordControl() {
