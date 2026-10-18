@@ -1,12 +1,11 @@
 """Deliver PCM to the emulator microphone, never to an Android text API."""
-import configparser
-import os
 import sys
 import time
 import wave
 from pathlib import Path
 
 import grpc
+from grpc_discovery import settings
 
 sys.path.insert(0, str(Path("work/microphone-proto").resolve()))
 from microphone_pb2 import AudioFormat, AudioPacket, MicrophoneState
@@ -31,12 +30,9 @@ def packets(path):
 def main():
     # The emulator writes a discovery INI with its ephemeral authentication
     # token. Keep that token in memory; never include it in test evidence.
-    raw = Path(os.environ["GBOARD_EMULATOR_GRPC_CONFIG"]).read_text()
-    config = configparser.ConfigParser(interpolation=None)
-    config.read_string("[emulator]\n" + raw)
-    settings = config["emulator"]
-    port = int(settings["grpc.port"])
-    metadata = (("authorization", "Bearer " + settings["grpc.token"]),)
+    values = settings()
+    port = int(values["grpc.port"])
+    metadata = (("authorization", "Bearer " + values["grpc.token"]),)
     with grpc.insecure_channel(f"127.0.0.1:{port}") as channel:
         grpc.channel_ready_future(channel).result(timeout=10)
         stub = EmulatorControllerStub(channel)

@@ -15,6 +15,7 @@ jobs:
     timeout-minutes: 35
     env:
       QEMU_AUDIO_DRV: pa
+      GBOARD_AUDIO_TRANSPORT: grpc
       GBOARD_SIGNING_PASSWORD: ${{ secrets.GBOARD_SIGNING_PASSWORD }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -40,7 +41,10 @@ jobs:
       - name: Install Android build tools
         run: sdkmanager 'build-tools;35.0.0' 'platforms;android-35'
       - name: Install pinned APK download client
-        run: python3 -m pip install -r requirements-build.txt
+        run: |
+          python3 -m pip install -r requirements-build.txt -r requirements-native-test.txt
+          mkdir -p work/microphone-proto
+          python3 -m grpc_tools.protoc -I tests --python_out=work/microphone-proto --grpc_python_out=work/microphone-proto tests/microphone.proto
       - name: Load persistent APK signing key
         env:
           GBOARD_SIGNING_KEYSTORE: ${{ secrets.GBOARD_SIGNING_KEYSTORE }}
@@ -102,7 +106,7 @@ jobs:
           ram-size: 4096M
           cores: 4
           disable-animations: true
-          emulator-options: -gpu software -no-snapshot -no-boot-anim -camera-back none -writable-system
+          emulator-options: -gpu software -no-snapshot -no-boot-anim -camera-back none -writable-system -grpc-use-token
           pre-emulator-launch-script: |
             pactl info
             ls -l /tmp/gboard-offline-pulse.sock /usr/lib/x86_64-linux-gnu/libpulse.so
