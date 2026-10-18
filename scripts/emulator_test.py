@@ -42,8 +42,9 @@ def main():
     (OUT / "preinstall-package.txt").write_text(adb("shell", "dumpsys", "package", ORIGINAL_PACKAGE))
     adb("install", "--no-incremental", "-r", str(OUT / "gboard-offline-coexist-experimental.apk"))
     adb("install", "--no-incremental", "-r", "work/probe/probe.apk")
-    services = adb("shell", "ime", "list", "-s").splitlines()
-    ime = next(s.strip() for s in services if s.startswith(PACKAGE + "/"))
+    services = [line.strip() for line in adb("shell", "ime", "list", "-a", "-s").splitlines()]
+    (OUT / "ime-services.txt").write_text("\n".join(services))
+    ime = next(s for s in services if s.startswith(PACKAGE + "/"))
     adb("shell", "ime", "enable", ime)
     adb("shell", "ime", "set", ime)
     adb("shell", "pm", "grant", PACKAGE, "android.permission.RECORD_AUDIO", check=False)
