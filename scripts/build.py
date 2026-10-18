@@ -34,7 +34,12 @@ def build(arch):
         raise RuntimeError("Original APK SHA-256 mismatch")
     signature = run(tools / "apksigner", "verify", "--verbose", "--print-certs", original)
     (dist / "original-signature.txt").write_text(signature)
-    fingerprints = re.findall(r"Signer #\d+ certificate SHA-256 digest: ([0-9a-fA-F]+)", signature)
+    # Google rotated its Android 13+ signing key. Independently verify the
+    # complete APK with its pinned legacy v2 signer rather than trusting a new
+    # certificate merely because the downloaded file contains it.
+    legacy_signature = run(tools / "apksigner", "verify", "--verbose", "--print-certs", "--min-sdk-version", "24", "--max-sdk-version", "31", original)
+    (dist / "original-legacy-signature.txt").write_text(legacy_signature)
+    fingerprints = re.findall(r"^Signer(?: #\d+| \([^\n]+\)) certificate SHA-256 digest: ([0-9a-fA-F]+)", legacy_signature, re.MULTILINE)
     fingerprints = [value.lower() for value in fingerprints]
     if fingerprints != [GOOGLE_CERT]:
         raise RuntimeError(f"Unexpected original signer: {fingerprints}\n{signature}")
