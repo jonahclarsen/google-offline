@@ -8,8 +8,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from patch_manifest import INTERNET, patch, pool_strings
 
 
-def fixture(utf8, permission_tag="uses-permission", permission=INTERNET):
+def fixture(utf8, permission_tag="uses-permission", permission=INTERNET, include_label=False):
     strings = ["manifest", permission_tag, "name", "http://schemas.android.com/apk/res/android", permission, "application"]
+    if include_label:
+        strings.append("label")
     encoded, offsets = bytearray(), []
     for value in strings:
         offsets.append(len(encoded))
@@ -31,7 +33,8 @@ def fixture(utf8, permission_tag="uses-permission", permission=INTERNET):
         return struct.pack("<HHIIIII", 0x103, 16, 24, 1, 0xffffffff, 0xffffffff, name)
 
     attr = struct.pack("<IIIHBBI", 3, 2, 4, 8, 0, 3, 4)
-    chunks = [pool, node(0), node(1, attr), end(1), node(5), end(5), end(0)]
+    app_attr = struct.pack("<IIIHBBI", 3, 6, 0xffffffff, 8, 0, 1, 0x7f000001) if include_label else b""
+    chunks = [pool, node(0), node(1, attr), end(1), node(5, app_attr), end(5), end(0)]
     content = b"".join(chunks)
     return struct.pack("<HHI", 3, 8, 8 + len(content)) + content, chunks
 
