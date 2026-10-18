@@ -48,6 +48,18 @@ def screenshot(name):
         subprocess.run(["adb", "exec-out", "screencap", "-p"], stdout=file, check=True)
 
 
+def ensure_emulator_root():
+    # Some current adbd versions close the transport before `adb root` gets
+    # its acknowledgement. Verify the resulting UID after reconnecting.
+    for _ in range(3):
+        adb("root", check=False)
+        adb("wait-for-device")
+        if adb("shell", "id", "-u", check=False).strip() == "0":
+            return
+        time.sleep(2)
+    raise RuntimeError("Disposable emulator did not provide root for isolation")
+
+
 def probe_file(name):
     return adb("shell", "cat", "/sdcard/Android/data/art.jonah.offlineprobe/files/" + name, check=False)
 
@@ -229,8 +241,7 @@ def main():
     # Root is available only on this disposable Google APIs emulator. Deny all
     # guest egress, including external Google recognition services, before
     # playing synthetic speech. This does not configure the user's phone.
-    adb("root")
-    adb("wait-for-device")
+    ensure_emulator_root()
     adb("shell", "iptables", "-I", "OUTPUT", "1", "-j", "DROP")
     adb("shell", "ip6tables", "-I", "OUTPUT", "1", "-j", "DROP")
     (OUT / "network-isolation.txt").write_text(adb("shell", "iptables", "-S", "OUTPUT") + adb("shell", "ip6tables", "-S", "OUTPUT"))
