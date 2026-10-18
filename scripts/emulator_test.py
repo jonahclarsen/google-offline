@@ -198,9 +198,20 @@ def dictation_attempt(prefix=""):
                 (OUT / f"{prefix}audio-state.txt").write_text(adb("shell", "dumpsys", "audio"))
                 if AUDIO_TRANSPORT == "pulse":
                     (OUT / f"{prefix}pulse-source-outputs.txt").write_text(subprocess.check_output(["pactl", "list", "source-outputs"], text=True))
-                player.wait(timeout=40)
-                if player.returncode:
-                    raise RuntimeError("Synthetic speech playback failed")
+                # Blocking gRPC delivery follows guest audio consumption. Once
+                # the recognizer finishes, the guest may stop consuming while
+                # repeated fixture audio remains queued. Stop the producer
+                # only after the actual editor contains a recognized phrase.
+                deadline = time.monotonic() + 40
+                while player.poll() is None:
+                    text = re.sub(r"[^a-z ]", "", probe_file("input.txt").lower())
+                    if "hello world" in text:
+                        player.terminate()
+                        player.wait(timeout=5)
+                        break
+                    if time.monotonic() >= deadline:
+                        raise RuntimeError("Synthetic speech delivery timed out")
+                    time.sleep(0.5)
                 time.sleep(3)
         finally:
             if player is not None and player.poll() is None:

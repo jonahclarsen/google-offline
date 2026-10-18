@@ -1,6 +1,5 @@
 """Deliver PCM to the emulator microphone, never to an Android text API."""
 import sys
-import time
 import wave
 from pathlib import Path
 
@@ -18,13 +17,10 @@ def packets(path):
             raise ValueError("Expected mono signed 16-bit PCM")
         rate = source.getframerate()
         format = AudioFormat(samplingRate=rate, channels=AudioFormat.Mono,
-                             format=AudioFormat.AUD_FMT_S16, mode=AudioFormat.MODE_REAL_TIME)
+                             format=AudioFormat.AUD_FMT_S16, mode=AudioFormat.MODE_UNSPECIFIED)
         frames = rate // 50
-        deadline = time.monotonic()
         while data := source.readframes(frames):
             yield AudioPacket(format=format, audio=data)
-            deadline += len(data) / (2 * rate)
-            time.sleep(max(0, deadline - time.monotonic()))
 
 
 def main():
