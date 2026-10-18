@@ -32,3 +32,10 @@ class BrokerResourceTests(unittest.TestCase):
             self.assertEqual(count, 1)
             size = u32(result, 12)
             self.assertEqual(pool_strings(result[8:8 + size])[-1], "\ud83d\ude00" if utf8 else "\U0001f600")
+
+    def test_native_and_java_crashes_are_attributed_to_the_right_package(self):
+        from arm_translation_baseline import crashes_for_package
+        package = "com.google.android.inputmethod.local"
+        for value in (f"Process: {package}, PID: 123", f"Cmdline: {package}", f">>> {package}:worker <<<"):
+            self.assertTrue(crashes_for_package(value, package))
+        self.assertFalse(crashes_for_package("Cmdline: com.google.android.inputmethod.latin", package))

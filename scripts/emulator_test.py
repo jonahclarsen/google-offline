@@ -9,6 +9,7 @@ import wave
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from audio_control import verify_capture
+from arm_translation_baseline import crashes_for_package, run_baseline
 
 PACKAGE = "com.google.android.inputmethod.local"
 ORIGINAL_PACKAGE = "com.google.android.inputmethod.latin"
@@ -184,7 +185,7 @@ def dictation_attempt(prefix=""):
     network_recognizer_started = "Online recognizer - start listening" in voice_log_text
     crash_log = adb("logcat", "-d", "-b", "crash")
     (OUT / f"{prefix}crashes.txt").write_text(crash_log)
-    crash_free = f"Process: {PACKAGE}, PID:" not in crash_log
+    crash_free = not crashes_for_package(crash_log, PACKAGE)
     speech_passed = crash_free and local_engine_confirmed and not network_recognizer_started and mic is not None and any("hello world" in re.sub(r"[^a-z ]", "", value.lower()) for value in [actual_dictated])
     # The fixture phrase is never inserted by any text API. A real local
     # transcript proves the microphone path even when the separate whole-wave
@@ -219,7 +220,8 @@ def main():
     adb("shell", "ime", "enable", ime)
     adb("shell", "ime", "set", ime)
     adb("shell", "pm", "grant", PACKAGE, "android.permission.RECORD_AUDIO", check=False)
-    adb("shell", "am", "start", "-n", "art.jonah.offlineprobe/.ProbeActivity")
+    adb("shell", "am", "force-stop", ORIGINAL_PACKAGE)
+    start_probe()
     time.sleep(8)
     # A fresh API 37 image may show a launcher ANR during first boot. Only
     # close that known unrelated process; Gboard/probe failures remain visible.
@@ -231,7 +233,7 @@ def main():
             break
         screenshot("launcher-anr.png")
         tap(close)
-        adb("shell", "am", "start", "-n", "art.jonah.offlineprobe/.ProbeActivity")
+        start_probe()
         time.sleep(5)
     # Dismiss first-run dialogs only when their labels are understood.
     for _ in range(3):
@@ -296,6 +298,7 @@ def main():
     isolated_network = network_control()
     offline_voice = dictation_attempt()
     report = {
+        "arm64_translation_baseline": ARM_BASELINE,
         "tested_apk_arch": TEST_ARCH, "installed_primary_cpu_abi": primary_abi[1],
         "emulator_supported_abis": adb("shell", "getprop", "ro.product.cpu.abilist").strip(),
         "native_bridge": adb("shell", "getprop", "ro.dalvik.vm.native.bridge").strip(),
@@ -345,7 +348,13 @@ def main():
 if __name__ == "__main__":
     supported_abis = adb("shell", "getprop", "ro.product.cpu.abilist").strip().split(",")
     requested_arch = os.environ.get("GBOARD_TEST_ARCH", "auto")
+    ARM_BASELINE = None
+    if requested_arch == "auto" and "arm64-v8a" in supported_abis:
+        ARM_BASELINE = run_baseline()
     TEST_ARCH = ("arm64" if "arm64-v8a" in supported_abis else "x86_64") if requested_arch == "auto" else requested_arch
+    if ARM_BASELINE and ARM_BASELINE["upstream_crashed"]:
+        TEST_ARCH = "x86_64"
+        print("ARM64 translation cannot run the unmodified Google APK; using x86-64 for platform checks, ARM64 remains unverified.", flush=True)
     if TEST_ARCH not in ("arm64", "x86_64"):
         raise RuntimeError("Unsupported test architecture")
     OUT = Path("dist") / TEST_ARCH
