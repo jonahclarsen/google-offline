@@ -61,7 +61,7 @@ def layout_target(key):
 
 
 def start_probe(*extras):
-    adb("shell", "am", "start", "-f", "0x10008000", "-n", "art.jonah.offlineprobe/.ProbeActivity", *extras)
+    adb("shell", "am", "start", "-W", "-f", "0x10008000", "-n", "art.jonah.offlineprobe/.ProbeActivity", *extras)
 
 
 def wait_keyboard():
@@ -238,6 +238,7 @@ def main():
     # clearing our temporary guest firewall rules. Do not reinstall or select
     # the IME again: its persistence is part of this check.
     adb("reboot")
+    time.sleep(3)
     adb("wait-for-device")
     for _ in range(90):
         if adb("shell", "getprop", "sys.boot_completed", check=False).strip() == "1":

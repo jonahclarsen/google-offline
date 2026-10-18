@@ -29,6 +29,7 @@ public class ProbeActivity extends Activity {
         });
         setContentView(input);
         saveText("");
+        saveFile("ime-visible.txt", "false");
         input.setOnApplyWindowInsetsListener((view, insets) -> {
             saveFile("ime-visible.txt", Boolean.toString(insets.isVisible(android.view.WindowInsets.Type.ime())));
             return insets;
