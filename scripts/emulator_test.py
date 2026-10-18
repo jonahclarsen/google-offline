@@ -205,10 +205,16 @@ def dictation_attempt(prefix=""):
             if mic is not None:
                 # Keep one live PulseAudio stream running across mic startup,
                 # avoiding source suspension between tiny playback processes.
-                player = play_audio("work/speech-loop.wav")
-                time.sleep(1)
+                if AUDIO_TRANSPORT == "pulse":
+                    player = play_audio("work/speech-loop.wav")
+                    time.sleep(1)
                 tap(mic)
                 time.sleep(1)
+                # Recent ARM audio HALs destroy their input between recordings.
+                # Opening the gRPC forwarder before the guest has an input can
+                # crash the emulator itself in audio_forwarder_enable.
+                if AUDIO_TRANSPORT == "grpc":
+                    player = play_audio("work/speech-loop.wav")
                 screenshot(f"{prefix}voice-listening.png")
                 (OUT / f"{prefix}audio-state.txt").write_text(adb("shell", "dumpsys", "audio"))
                 if AUDIO_TRANSPORT == "pulse":
