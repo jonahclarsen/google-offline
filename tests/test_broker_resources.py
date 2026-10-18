@@ -24,3 +24,11 @@ class BrokerResourceTests(unittest.TestCase):
             before = pool_strings(source[8:8 + size])
             after = pool_strings(result[8:8 + size])
             self.assertEqual(after, [ALIASES.get(value, value) for value in before])
+
+    def test_android_surrogate_encoded_strings_survive_broker_remapping(self):
+        for utf8 in (True, False):
+            source = fixture(utf8, permission="com.google.android.gms", extra_strings=["\ud83d\ude00"])[0]
+            result, count = remap_resources(source, ALIASES)
+            self.assertEqual(count, 1)
+            size = u32(result, 12)
+            self.assertEqual(pool_strings(result[8:8 + size])[-1], "\ud83d\ude00" if utf8 else "\U0001f600")

@@ -8,20 +8,21 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from patch_manifest import INTERNET, patch, pool_strings
 
 
-def fixture(utf8, permission_tag="uses-permission", permission=INTERNET, include_label=False, include_backup=False):
+def fixture(utf8, permission_tag="uses-permission", permission=INTERNET, include_label=False, include_backup=False, extra_strings=()):
     strings = ["manifest", permission_tag, "name", "http://schemas.android.com/apk/res/android", permission, "application"]
     if include_label:
         strings.append("label")
     if include_backup:
         strings.append("allowBackup")
+    strings.extend(extra_strings)
     encoded, offsets = bytearray(), []
     for value in strings:
         offsets.append(len(encoded))
         if utf8:
-            raw = value.encode()
+            raw = value.encode("utf-8", errors="surrogatepass")
             encoded.extend(bytes([len(value), len(raw)]) + raw + b"\0")
         else:
-            encoded.extend(struct.pack("<H", len(value)) + value.encode("utf-16le") + b"\0\0")
+            encoded.extend(struct.pack("<H", len(value)) + value.encode("utf-16le", errors="surrogatepass") + b"\0\0")
     encoded.extend(b"\0" * (-len(encoded) % 4))
     start = 28 + 4 * len(strings)
     pool = struct.pack("<HHIIIIII", 1, 28, start + len(encoded), len(strings), 0, 0x100 if utf8 else 0, start, 0)

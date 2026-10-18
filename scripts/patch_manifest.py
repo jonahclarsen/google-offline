@@ -34,7 +34,7 @@ def pool_strings(chunk):
         n, pos = length(pos)
         if utf8:
             n, pos = length(pos)
-        strings.append(chunk[pos:pos + n * (1 if utf8 else 2)].decode("utf-8" if utf8 else "utf-16le"))
+        strings.append(chunk[pos:pos + n * (1 if utf8 else 2)].decode("utf-8" if utf8 else "utf-16le", errors="surrogatepass"))
     return strings
 
 
