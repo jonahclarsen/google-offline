@@ -1,0 +1,14 @@
+{
+  "arm64": {
+    "url": "https://gitlab.opengapps.org/opengapps/arm64/-/raw/84e304e0643be72daebb5ebfe80c5f4e8a8a6e6c/app/com.google.android.inputmethod.latin/23/nodpi/80959522.apk",
+    "sha256": "c7732bebec8b016fbc8bec8a9e882420bbc3292e011949287d9596171a41f25b",
+    "bytes": 81957935,
+    "source": "Open GApps source archive (historical test fixture)"
+  },
+  "x86_64": {
+    "url": "https://gitlab.opengapps.org/opengapps/x86_64/-/raw/5cbe66c16d4bf61d13e2e4e15f245d838556aca2/app/com.google.android.inputmethod.latin/23/nodpi/80959524.apk",
+    "sha256": "a776b95f6827e0e213fb9044fd3154ad694045f6cf68ca4ebfb2c14feccdbc84",
+    "bytes": 86639645,
+    "source": "Open GApps source archive (historical test fixture)"
+  }
+}
