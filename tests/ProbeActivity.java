@@ -30,17 +30,13 @@ public class ProbeActivity extends Activity {
         setContentView(input);
         saveText("");
         saveFile("ime-visible.txt", "false");
-        input.setOnApplyWindowInsetsListener((view, insets) -> {
-            saveFile("ime-visible.txt", Boolean.toString(insets.isVisible(android.view.WindowInsets.Type.ime())));
-            return insets;
-        });
+        input.getViewTreeObserver().addOnGlobalLayoutListener(() -> saveImeState(input));
         input.requestFocus();
         input.postDelayed(new Runnable() {
             int attempts;
             public void run() {
                 ((InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE)).showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
-                android.view.WindowInsets insets = input.getRootWindowInsets();
-                if (++attempts < 10 && (insets == null || !insets.isVisible(android.view.WindowInsets.Type.ime()))) input.postDelayed(this, 2000);
+                if (++attempts < 10 && !saveImeState(input)) input.postDelayed(this, 2000);
             }
         }, 1000);
         if (getIntent().getBooleanExtra("check_network", false)) {
@@ -72,6 +68,27 @@ public class ProbeActivity extends Activity {
 
     private void saveText(String text) {
         saveFile("input.txt", text);
+    }
+
+    private boolean saveImeState(EditText input) {
+        android.graphics.Rect visible = new android.graphics.Rect();
+        input.getWindowVisibleDisplayFrame(visible);
+        int height = getWindowManager().getCurrentWindowMetrics().getBounds().height();
+        android.view.WindowInsets insets = input.getRootWindowInsets();
+        boolean rootVisible = insets != null && insets.isVisible(android.view.WindowInsets.Type.ime());
+        // Legacy decor can consume child IME insets. Window geometry supplies
+        // an independent check for this fixed full-screen test Activity.
+        boolean shown = rootVisible || height - visible.bottom > height / 4;
+        saveFile("ime-visible.txt", Boolean.toString(shown));
+        try {
+            JSONObject state = new JSONObject();
+            state.put("root_insets_ime_visible", rootVisible);
+            state.put("window_height", height);
+            state.put("visible_bottom", visible.bottom);
+            state.put("keyboard_visible", shown);
+            saveFile("ime-state.json", state.toString());
+        } catch (Exception ignored) {}
+        return shown;
     }
 
     private void saveFile(String name, String text) {

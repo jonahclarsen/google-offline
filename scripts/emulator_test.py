@@ -67,7 +67,7 @@ def start_probe(*extras):
 def wait_keyboard():
     for _ in range(25):
         tree = ui()
-        if probe_file("ime-visible.txt").strip() == "true":
+        if probe_file("ime-visible.txt").strip() == "true" or any(n.attrib.get("class") == "_IME_WINDOW" for n in tree.iter("node")):
             return tree
         editor = next((n for n in tree.iter("node") if n.attrib.get("class") == "android.widget.EditText"), None)
         if editor is not None:
@@ -87,10 +87,11 @@ def network_control():
 
 def dictation_attempt(prefix=""):
     adb("emu", "avd", "hostmicon")
-    wait_keyboard()
-    tree = ui()
+    tree = wait_keyboard()
+    if probe_file("input.txt").strip():
+        raise RuntimeError("Speech test must start from an empty real editor")
     mic = next((n for n in tree.iter("node") if n.attrib.get("package") == PACKAGE and any(word in n.attrib.get("content-desc", "").lower() for word in ("voice", "microphone", "dictat"))), None)
-    if mic is None and probe_file("ime-visible.txt").strip() == "true":
+    if mic is None:
         mic = layout_target("voice")
     pid = adb("shell", "pidof", "-s", PACKAGE).strip()
     with (OUT / f"{prefix}gboard-voice-logcat.txt").open("w") as voice_log:
@@ -272,4 +273,5 @@ if __name__ == "__main__":
         probe_capture.wait(timeout=5)
         probe_log.close()
         (OUT / "logcat.txt").write_text(adb("logcat", "-d", "-t", "2500", check=False))
+        (OUT / "ime-state.json").write_text(probe_file("ime-state.json"))
         screenshot("last-state.png")
