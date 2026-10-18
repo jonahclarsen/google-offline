@@ -140,6 +140,21 @@ def prepare_speech_loop():
         output.writeframes((samples + gap) * 8)
 
 
+def capture_microphone_control(prefix=""):
+    # Repeat after reboot too: host playback success does not establish that
+    # Android's restarted audio HAL receives anything other than silence.
+    adb("emu", "avd", "hostmicon")
+    start_probe("--ez", "record_audio", "true", "--ez", "check_network", "true")
+    time.sleep(2)
+    for _ in range(2):
+        subprocess.run(["paplay", "--device=speech_input", "work/hello-world.wav"], check=True)
+        time.sleep(0.5)
+    time.sleep(4)
+    output = OUT / f"{prefix}microphone-control.pcm"
+    adb("pull", "/sdcard/Android/data/art.jonah.offlineprobe/files/microphone-control.pcm", str(output))
+    return verify_capture(output, "work/hello-world.wav")
+
+
 def dictation_attempt(prefix=""):
     adb("emu", "avd", "hostmicon")
     readiness = exercise_keyboard(prefix)
@@ -286,15 +301,7 @@ def main():
     adb("shell", "iptables", "-I", "OUTPUT", "1", "-j", "DROP")
     adb("shell", "ip6tables", "-I", "OUTPUT", "1", "-j", "DROP")
     (OUT / "network-isolation.txt").write_text(adb("shell", "iptables", "-S", "OUTPUT") + adb("shell", "ip6tables", "-S", "OUTPUT"))
-    adb("emu", "avd", "hostmicon")
-    start_probe("--ez", "record_audio", "true", "--ez", "check_network", "true")
-    time.sleep(2)
-    for _ in range(2):
-        subprocess.run(["paplay", "--device=speech_input", "work/hello-world.wav"], check=True)
-        time.sleep(0.5)
-    time.sleep(4)
-    adb("pull", "/sdcard/Android/data/art.jonah.offlineprobe/files/microphone-control.pcm", str(OUT / "microphone-control.pcm"))
-    microphone_control = verify_capture(OUT / "microphone-control.pcm", "work/hello-world.wav")
+    microphone_control = capture_microphone_control()
     isolated_network = network_control()
     offline_voice = dictation_attempt()
     report = {
@@ -332,7 +339,7 @@ def main():
     adb("shell", "input", "keyevent", "82")
     selected = adb("shell", "settings", "get", "secure", "default_input_method").strip()
     report["selected_keyboard_persisted_after_reboot"] = selected.startswith(PACKAGE + "/")
-    start_probe("--ez", "check_network", "true")
+    report["post_reboot_microphone_waveform_diagnostic"] = capture_microphone_control("post-reboot-")
     online_network = network_control()
     online_voice = dictation_attempt("post-reboot-")
     report["post_reboot_network_control"] = online_network
