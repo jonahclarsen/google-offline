@@ -11,8 +11,8 @@ A separately installed Gboard with a bundled English (US) speech model and direc
 | Target | Result | Evidence |
 | --- | --- | --- |
 | Native ARM64 Android 12 / API 31 | Full scenario passed on the **exact released APK** | [Report and screenshot](evidence/native-arm64-api31/) |
-| x86-64 Android 12 / API 31 | Full scenario passed | [CI report](evidence/39098533009/api31-runtime.json) |
-| x86-64 Android 17 / API 37 | Isolated local transcription passed; complete reboot scenario not yet verified | [CI report](evidence/39098533009/api37-runtime.json) |
+| x86-64 Android 12 / API 31 | Full scenario passed | [Latest CI report](evidence/39104618445/api31-runtime.json) |
+| x86-64 Android 17 / API 37 | Earlier isolated transcription passed; latest run failed, complete reboot scenario unverified | [Latest failed report](evidence/39104618445/api37-runtime.json) |
 | Native ARM64 Android 17 / API 37 | Unverified: emulator microphone transport failed | [Recorded limitations](evidence/native-arm64-api37/) |
 | Samsung S10/S25 hardware and One UI | Not tested; the user requested emulator tests for now | Device validation remains outstanding |
 

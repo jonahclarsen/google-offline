@@ -1,0 +1,9 @@
+{
+  "run": "https://github.com/jonahclarsen/google-offline/actions/runs/39104618445",
+  "test_commit": "c18c27d",
+  "tested_arch": "x86_64",
+  "api31_job": "success",
+  "api37_job": "failure",
+  "api37_report_complete": false,
+  "scope": "API 31 completed both phases. API 37 produced no transcript in three isolated attempts and did not complete the reboot phase. These independently rebuilt x86 APKs are distinct from the released ARM64 APK."
+}

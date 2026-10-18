@@ -1,0 +1,136 @@
+{
+  "arm64_translation_baseline": null,
+  "tested_apk_sha256": "82817421674ae9e09da892f883192a54e0be0d96dda30d796fa954e5e07eb536",
+  "audio_transport": "pulse",
+  "tested_apk_arch": "x86_64",
+  "installed_primary_cpu_abi": "x86_64",
+  "emulator_supported_abis": "x86_64,arm64-v8a",
+  "native_bridge": "libndk_translation.so",
+  "cloud_backup_allowed": false,
+  "keyboard_taps": [
+    "q",
+    "w",
+    "e"
+  ],
+  "actual_typed": "qwe",
+  "keyboard_typing_passed": true,
+  "gboard_direct_internet_granted": false,
+  "stock_gboard_unchanged": true,
+  "speech": {
+    "speech_recognizer_available": true,
+    "on_device_recognizer_available": true,
+    "speech_services": [
+      {
+        "package": "com.google.android.as",
+        "class": "com.google.android.apps.miphone.aiai.app.AiAiSpeechRecognitionService",
+        "internet_granted": false
+      },
+      {
+        "package": "com.google.android.tts",
+        "class": "com.google.android.apps.speech.tts.googletts.service.GoogleTTSRecognitionService",
+        "internet_granted": true
+      }
+    ],
+    "offline_dictation": "NOT VERIFIED: service discovery is not a transcription test"
+  },
+  "expected_speech": "hello world",
+  "microphone_waveform_diagnostic": {
+    "passed": false,
+    "samples": 100352,
+    "rms": 0.1182825116026051,
+    "source_waveform_correlation": 0.009801081310705702,
+    "best_offset_samples": 184
+  },
+  "microphone_diagnostic_scope": "Separate whole-wave timing comparison; actual local transcription independently verifies speech transport.",
+  "isolated_network_control": {
+    "url": "https://example.com/",
+    "success": false,
+    "error": "UnknownHostException"
+  },
+  "offline_voice": {
+    "passed": false,
+    "actual_dictated": "",
+    "keyboard_readiness": {
+      "passed": true,
+      "actual_typed": "qwe",
+      "attempts": 2
+    },
+    "microphone_path_verified_by_transcript": false,
+    "local_engine_confirmed": true,
+    "network_recognizer_started": false,
+    "gboard_crash_free": true,
+    "voice_button_found": true,
+    "voice_button": {
+      "bounds": "[1019,1105][1021,1107]",
+      "class": "_FIXED_EMULATOR_LAYOUT",
+      "content-desc": "voice"
+    },
+    "accessibility_input_values": [],
+    "attempt_count": 3,
+    "attempts": [
+      {
+        "passed": false,
+        "actual_dictated": "",
+        "keyboard_readiness": {
+          "passed": true,
+          "actual_typed": "qwe",
+          "attempts": 1
+        },
+        "microphone_path_verified_by_transcript": false,
+        "local_engine_confirmed": true,
+        "network_recognizer_started": false,
+        "gboard_crash_free": true,
+        "voice_button_found": true,
+        "voice_button": {
+          "bounds": "[1019,1105][1021,1107]",
+          "class": "_FIXED_EMULATOR_LAYOUT",
+          "content-desc": "voice"
+        },
+        "accessibility_input_values": []
+      },
+      {
+        "passed": false,
+        "actual_dictated": "",
+        "keyboard_readiness": {
+          "passed": true,
+          "actual_typed": "qwe",
+          "attempts": 1
+        },
+        "microphone_path_verified_by_transcript": false,
+        "local_engine_confirmed": true,
+        "network_recognizer_started": false,
+        "gboard_crash_free": true,
+        "voice_button_found": true,
+        "voice_button": {
+          "bounds": "[1019,1105][1021,1107]",
+          "class": "_FIXED_EMULATOR_LAYOUT",
+          "content-desc": "voice"
+        },
+        "accessibility_input_values": []
+      },
+      {
+        "passed": false,
+        "actual_dictated": "",
+        "keyboard_readiness": {
+          "passed": true,
+          "actual_typed": "qwe",
+          "attempts": 2
+        },
+        "microphone_path_verified_by_transcript": false,
+        "local_engine_confirmed": true,
+        "network_recognizer_started": false,
+        "gboard_crash_free": true,
+        "voice_button_found": true,
+        "voice_button": {
+          "bounds": "[1019,1105][1021,1107]",
+          "class": "_FIXED_EMULATOR_LAYOUT",
+          "content-desc": "voice"
+        },
+        "accessibility_input_values": []
+      }
+    ]
+  },
+  "offline_dictation_passed": false,
+  "post_reboot_online_dictation_passed": false,
+  "isolation_scope": "First phase blocks all emulator IPv4/IPv6 egress. Second phase reboots and verifies another app has network access. The APK requires no phone firewall or VPN."
+}
