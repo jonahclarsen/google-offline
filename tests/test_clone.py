@@ -4,7 +4,7 @@ import unittest
 import zlib
 from unittest.mock import patch as mock_patch
 from test_manifest_patch import fixture
-from clone_apk import CLONE_PACKAGE, ORIGINAL_PACKAGE, dex_strings, label_manifest, rewrite_dex
+from clone_apk import CLONE_PACKAGE, ORIGINAL_PACKAGE, dex_strings, label_manifest, rewrite_dex, trust_clone_signer, CERT_PAYLOAD, DEVELOPMENT_CERT
 from patch_manifest import pool_strings, u32
 
 
@@ -33,6 +33,17 @@ class CloneTests(unittest.TestCase):
         with mock_patch("clone_apk.CLONE_PACKAGE", "com.aaaaaa.android.inputmethod.latin"):
             with self.assertRaises(ValueError):
                 rewrite_dex(sample_dex())
+
+    def test_trust_update_is_an_exact_certificate_payload_replacement(self):
+        digest = hashlib.sha256(b"our signing certificate").digest()
+        source = b"prefix" + CERT_PAYLOAD + b"suffix"
+        result, count = trust_clone_signer(source, digest)
+        self.assertEqual(count, 1)
+        self.assertEqual(result, b"prefix" + CERT_PAYLOAD[:8] + digest + b"suffix")
+        for bad in (DEVELOPMENT_CERT, CERT_PAYLOAD * 2):
+            with self.assertRaises(ValueError):
+                trust_clone_signer(bad, digest)
+        self.assertEqual(trust_clone_signer(b"unrelated", digest), (b"unrelated", 0))
 
     def test_inline_app_label_with_both_manifest_string_encodings(self):
         for utf8 in (True, False):

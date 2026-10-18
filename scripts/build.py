@@ -106,7 +106,10 @@ def build(arch):
     report["signing"] = "Persistent private key supplied by GitHub Actions secrets; matching builds can update each other." if stable_signing else "Ephemeral local test key; builds cannot update each other."
     (dist / "build-report.json").write_text(json.dumps(report, indent=2) + "\n")
     cloned_unsigned, cloned_aligned = work / "clone-unsigned.apk", work / "clone-aligned.apk"
-    clone_changes = clone(output, cloned_unsigned)
+    clone_certificates = re.findall(r"^Signer #1 certificate SHA-256 digest: ([0-9a-fA-F]{64})$", output_signature, re.MULTILINE)
+    if len(clone_certificates) != 1:
+        raise RuntimeError("Unable to identify clone signing certificate")
+    clone_changes = clone(output, cloned_unsigned, bytes.fromhex(clone_certificates[0]))
     run(tools / "zipalign", "-P", "16", "-f", "4", cloned_unsigned, cloned_aligned)
     cloned_output = dist / "gboard-offline-coexist-experimental.apk"
     run(tools / "apksigner", "sign", "--ks", key, "--ks-pass", password_spec, "--out", cloned_output, cloned_aligned)
@@ -116,7 +119,7 @@ def build(arch):
     cloned_permissions = run(tools / "aapt2", "dump", "permissions", cloned_output)
     if f"package: name='{CLONE_PACKAGE}'" not in cloned_badging or "application-label:'Gboard Offline'" not in cloned_badging or "android.permission.INTERNET" in cloned_permissions:
         raise RuntimeError("Clone package, label, or permission verification failed")
-    (dist / "clone-report.json").write_text(json.dumps({"package": CLONE_PACKAGE, "label": "Gboard Offline", "changed_files_beyond_permission_patch": clone_changes, "sha256": hashlib.sha256(cloned_output.read_bytes()).hexdigest(), "offline_dictation": "NOT VERIFIED", "runtime": "not tested"}, indent=2) + "\n")
+    (dist / "clone-report.json").write_text(json.dumps({"package": CLONE_PACKAGE, "label": "Gboard Offline", "changed_files_beyond_permission_patch": clone_changes, "internal_trusted_signer_sha256": clone_certificates[0], "sha256": hashlib.sha256(cloned_output.read_bytes()).hexdigest(), "offline_dictation": "NOT VERIFIED", "runtime": "not tested"}, indent=2) + "\n")
     print(json.dumps(report, indent=2))
 
 

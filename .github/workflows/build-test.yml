@@ -109,6 +109,18 @@ jobs:
           path: dist/
           retention-days: 7
           if-no-files-found: error
+      - name: Publish small runtime evidence separately
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: runtime-evidence-api${{ matrix.api }}
+          path: |
+            dist/x86_64/*.json
+            dist/x86_64/*.txt
+            dist/x86_64/*.xml
+            dist/x86_64/*.png
+            dist/x86_64/*.pcm
+          retention-days: 7
       - name: Summarize evidence
         if: always()
         run: |

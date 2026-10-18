@@ -31,6 +31,23 @@ def dex_strings(data):
     return result
 
 
+# This pinned APK's SignatureUtils has a production Google digest and two
+# development digests. Retain the production digest; replace one development
+# trust slot with the actual clone signer's digest. Verification still compares
+# certificate hashes rather than accepting arbitrary signatures.
+DEVELOPMENT_CERT = bytes.fromhex("103938ee4537e59e8ee792f654504fb8346fc6b346d0bbc4415fc339fcfc8ec1")
+CERT_PAYLOAD = struct.pack("<HHI", 0x0300, 1, 32) + DEVELOPMENT_CERT
+
+
+def trust_clone_signer(data, digest):
+    if len(digest) != 32:
+        raise ValueError("Expected SHA-256 signing certificate digest")
+    count = data.count(CERT_PAYLOAD)
+    if count > 1 or data.count(DEVELOPMENT_CERT) != count:
+        raise ValueError("Unexpected certificate payload layout")
+    return data.replace(CERT_PAYLOAD, CERT_PAYLOAD[:8] + digest), count
+
+
 def rewrite_dex(data):
     old = dex_strings(data)
     changed = replace_package(data)
@@ -90,8 +107,8 @@ def label_manifest(data, label="Gboard Offline"):
     return bytes(result)
 
 
-def clone(source, destination):
-    changed = []
+def clone(source, destination, signing_digest=None):
+    changed, trust_updates = [], 0
     with zipfile.ZipFile(source) as src, zipfile.ZipFile(destination, "w") as dst:
         for info in src.infolist():
             name = info.filename
@@ -102,7 +119,12 @@ def clone(source, destination):
             before = src.read(name)
             after = before
             if name.endswith(".dex"):
-                after = rewrite_dex(before)
+                if signing_digest is not None:
+                    before_trust, count = trust_clone_signer(before, signing_digest)
+                    trust_updates += count
+                else:
+                    before_trust = before
+                after = rewrite_dex(before_trust)
             elif name == "AndroidManifest.xml":
                 after = label_manifest(replace_package(before))
             elif name == "resources.arsc":
@@ -110,4 +132,6 @@ def clone(source, destination):
             if before != after:
                 changed.append(name)
             dst.writestr(info, after)
+    if signing_digest is not None and trust_updates != 1:
+        raise ValueError("Expected exactly one clone certificate trust update")
     return changed
