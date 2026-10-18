@@ -119,7 +119,7 @@ def main():
     adb("shell", "ip6tables", "-I", "OUTPUT", "1", "-j", "DROP")
     (OUT / "network-isolation.txt").write_text(adb("shell", "iptables", "-S", "OUTPUT") + adb("shell", "ip6tables", "-S", "OUTPUT"))
     adb("emu", "avd", "hostmicon")
-    adb("shell", "am", "start", "--activity-clear-task", "--activity-new-task", "-n", "art.jonah.offlineprobe/.ProbeActivity", "--ez", "record_audio", "true")
+    adb("shell", "am", "start", "-f", "0x10008000", "-n", "art.jonah.offlineprobe/.ProbeActivity", "--ez", "record_audio", "true")
     time.sleep(2)
     for _ in range(2):
         subprocess.run(["paplay", "--device=speech_input", "work/hello-world.wav"], check=True)
@@ -167,8 +167,13 @@ def main():
 
 
 if __name__ == "__main__":
+    probe_log = (OUT / "probe-logcat.txt").open("w")
+    probe_capture = subprocess.Popen(["adb", "logcat", "-v", "threadtime", "OfflineProbe:V", "AudioRecord:V", "ActivityTaskManager:I", "*:S"], stdout=probe_log, stderr=subprocess.STDOUT)
     try:
         main()
     finally:
+        probe_capture.terminate()
+        probe_capture.wait(timeout=5)
+        probe_log.close()
         (OUT / "logcat.txt").write_text(adb("logcat", "-d", "-t", "2500", check=False))
         screenshot("last-state.png")
