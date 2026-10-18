@@ -1,0 +1,77 @@
+--------- beginning of crash
+10-18 04:56:16.699  3244  3593 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x8 in tid 3593 (DecoderWrapper-), pid 3244 (putmethod.latin)
+10-18 04:56:17.110  3734  3734 F DEBUG   : *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+10-18 04:56:17.110  3734  3734 F DEBUG   : Build fingerprint: 'google/sdk_gphone64_x86_64/emulator64_x86_64_arm64:12/SE1A.220826.008/10564458:userdebug/dev-keys'
+10-18 04:56:17.110  3734  3734 F DEBUG   : Revision: '0'
+10-18 04:56:17.110  3734  3734 F DEBUG   : ABI: 'x86_64'
+10-18 04:56:17.110  3734  3734 F DEBUG   : Timestamp: 2026-10-18 04:56:16.807703959+0000
+10-18 04:56:17.110  3734  3734 F DEBUG   : Process uptime: 0s
+10-18 04:56:17.110  3734  3734 F DEBUG   : Cmdline: com.google.android.inputmethod.latin
+10-18 04:56:17.110  3734  3734 F DEBUG   : pid: 3244, tid: 3593, name: DecoderWrapper-  >>> com.google.android.inputmethod.latin <<<
+10-18 04:56:17.110  3734  3734 F DEBUG   : uid: 10145
+10-18 04:56:17.110  3734  3734 F DEBUG   : signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x8
+10-18 04:56:17.110  3734  3734 F DEBUG   : Cause: null pointer dereference
+10-18 04:56:17.110  3734  3734 F DEBUG   :     rax 00007242c0105e98  rbx 000072431c1dc050  rcx 000072430d11780c  rdx 00007242c0105e98
+10-18 04:56:17.111  3734  3734 F DEBUG   :     r8  ffffe00000000000  r9  0000fffffffffff8  r10 0000200000000000  r11 000072432627d820
+10-18 04:56:17.111  3734  3734 F DEBUG   :     r12 00007243262756f8  r13 0000000000105e98  r14 0000000000000000  r15 0000000000000000
+10-18 04:56:17.111  3734  3734 F DEBUG   :     rdi 000072431c1dc050  rsi 00007242aa05a1a0
+10-18 04:56:17.111  3734  3734 F DEBUG   :     rbp 000072431c1dc050  rsp 00007242b31b2f00  rip 00007242aa05a1cb
+10-18 04:56:17.111  3734  3734 F DEBUG   : backtrace:
+10-18 04:56:17.111  3734  3734 F DEBUG   :       #00 pc 00000000001761cb  <anonymous:7242a9ee4000>
+10-18 04:56:20.505  3866  4075 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x8 in tid 4075 (DecoderWrapper-), pid 3866 (putmethod.latin)
+10-18 04:56:20.865  4247  4247 F DEBUG   : *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+10-18 04:56:20.865  4247  4247 F DEBUG   : Build fingerprint: 'google/sdk_gphone64_x86_64/emulator64_x86_64_arm64:12/SE1A.220826.008/10564458:userdebug/dev-keys'
+10-18 04:56:20.866  4247  4247 F DEBUG   : Revision: '0'
+10-18 04:56:20.866  4247  4247 F DEBUG   : ABI: 'x86_64'
+10-18 04:56:20.866  4247  4247 F DEBUG   : Timestamp: 2026-10-18 04:56:20.685099722+0000
+10-18 04:56:20.866  4247  4247 F DEBUG   : Process uptime: 0s
+10-18 04:56:20.866  4247  4247 F DEBUG   : Cmdline: com.google.android.inputmethod.latin
+10-18 04:56:20.866  4247  4247 F DEBUG   : pid: 3866, tid: 4075, name: DecoderWrapper-  >>> com.google.android.inputmethod.latin <<<
+10-18 04:56:20.866  4247  4247 F DEBUG   : uid: 10145
+10-18 04:56:20.866  4247  4247 F DEBUG   : signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x8
+10-18 04:56:20.866  4247  4247 F DEBUG   : Cause: null pointer dereference
+10-18 04:56:20.866  4247  4247 F DEBUG   :     rax 00007242bed10e98  rbx 0000724315e0a050  rcx 000072431024e89c  rdx 00007242bed10e98
+10-18 04:56:20.866  4247  4247 F DEBUG   :     r8  ffffe00000000000  r9  0000fffffffffff8  r10 0000200000000000  r11 000072432627d820
+10-18 04:56:20.866  4247  4247 F DEBUG   :     r12 00007243262756f8  r13 0000000000d10e98  r14 0000000000000000  r15 0000000000000000
+10-18 04:56:20.866  4247  4247 F DEBUG   :     rdi 0000724315e0a050  rsi 00007242b035c920
+10-18 04:56:20.866  4247  4247 F DEBUG   :     rbp 0000724315e0a050  rsp 00007242b4f00f00  rip 00007242b035c94b
+10-18 04:56:20.866  4247  4247 F DEBUG   : backtrace:
+10-18 04:56:20.866  4247  4247 F DEBUG   :       #00 pc 000000000031e94b  <anonymous:7242b003e000>
+10-18 04:56:27.462  4780  5185 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x8 in tid 5185 (DecoderWrapper-), pid 4780 (putmethod.latin)
+10-18 04:56:28.327  5219  5219 F DEBUG   : *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+10-18 04:56:28.327  5219  5219 F DEBUG   : Build fingerprint: 'google/sdk_gphone64_x86_64/emulator64_x86_64_arm64:12/SE1A.220826.008/10564458:userdebug/dev-keys'
+10-18 04:56:28.327  5219  5219 F DEBUG   : Revision: '0'
+10-18 04:56:28.327  5219  5219 F DEBUG   : ABI: 'x86_64'
+10-18 04:56:28.327  5219  5219 F DEBUG   : Timestamp: 2026-10-18 04:56:27.897202902+0000
+10-18 04:56:28.327  5219  5219 F DEBUG   : Process uptime: 0s
+10-18 04:56:28.327  5219  5219 F DEBUG   : Cmdline: com.google.android.inputmethod.latin
+10-18 04:56:28.327  5219  5219 F DEBUG   : pid: 4780, tid: 5185, name: DecoderWrapper-  >>> com.google.android.inputmethod.latin <<<
+10-18 04:56:28.327  5219  5219 F DEBUG   : uid: 10145
+10-18 04:56:28.327  5219  5219 F DEBUG   : signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x8
+10-18 04:56:28.327  5219  5219 F DEBUG   : Cause: null pointer dereference
+10-18 04:56:28.327  5219  5219 F DEBUG   :     rax 00007242b870ce98  rbx 000072431c4eb050  rcx 000072431245269c  rdx 00007242b870ce98
+10-18 04:56:28.327  5219  5219 F DEBUG   :     r8  ffffe00000000000  r9  0000fffffffffff8  r10 0000200000000000  r11 000072432627d820
+10-18 04:56:28.327  5219  5219 F DEBUG   :     r12 00007243262756f8  r13 000000000070ce98  r14 0000000000000000  r15 0000000000000000
+10-18 04:56:28.327  5219  5219 F DEBUG   :     rdi 000072431c4eb050  rsi 00007242a9eea320
+10-18 04:56:28.327  5219  5219 F DEBUG   :     rbp 000072431c4eb050  rsp 00007242acbfaf00  rip 00007242a9eea34b
+10-18 04:56:28.328  5219  5219 F DEBUG   : backtrace:
+10-18 04:56:28.328  5219  5219 F DEBUG   :       #00 pc 00000000002df34b  <anonymous:7242a9c0b000>
+10-18 04:56:29.987  5247  5354 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x8 in tid 5354 (DecoderWrapper-), pid 5247 (putmethod.latin)
+10-18 04:56:30.146  5371  5371 F DEBUG   : *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+10-18 04:56:30.146  5371  5371 F DEBUG   : Build fingerprint: 'google/sdk_gphone64_x86_64/emulator64_x86_64_arm64:12/SE1A.220826.008/10564458:userdebug/dev-keys'
+10-18 04:56:30.146  5371  5371 F DEBUG   : Revision: '0'
+10-18 04:56:30.146  5371  5371 F DEBUG   : ABI: 'x86_64'
+10-18 04:56:30.146  5371  5371 F DEBUG   : Timestamp: 2026-10-18 04:56:30.024101645+0000
+10-18 04:56:30.146  5371  5371 F DEBUG   : Process uptime: 0s
+10-18 04:56:30.146  5371  5371 F DEBUG   : Cmdline: com.google.android.inputmethod.latin
+10-18 04:56:30.146  5371  5371 F DEBUG   : pid: 5247, tid: 5354, name: DecoderWrapper-  >>> com.google.android.inputmethod.latin <<<
+10-18 04:56:30.146  5371  5371 F DEBUG   : uid: 10145
+10-18 04:56:30.146  5371  5371 F DEBUG   : signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x8
+10-18 04:56:30.146  5371  5371 F DEBUG   : Cause: null pointer dereference
+10-18 04:56:30.146  5371  5371 F DEBUG   :     rax 00007242c00fee98  rbx 0000724320f78050  rcx 00007243148c6f4c  rdx 00007242c00fee98
+10-18 04:56:30.146  5371  5371 F DEBUG   :     r8  ffffe00000000000  r9  0000fffffffffff8  r10 0000200000000000  r11 000072432627d820
+10-18 04:56:30.146  5371  5371 F DEBUG   :     r12 00007243262756f8  r13 00000000000fee98  r14 0000000000000000  r15 0000000000000000
+10-18 04:56:30.146  5371  5371 F DEBUG   :     rdi 0000724320f78050  rsi 00007242af2af310
+10-18 04:56:30.146  5371  5371 F DEBUG   :     rbp 0000724320f78050  rsp 00007242b30c5f00  rip 00007242af2af33b
+10-18 04:56:30.146  5371  5371 F DEBUG   : backtrace:
+10-18 04:56:30.146  5371  5371 F DEBUG   :       #00 pc 00000000002df33b  <anonymous:7242aefd0000>

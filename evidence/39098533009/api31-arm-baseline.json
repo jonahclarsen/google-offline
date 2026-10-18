@@ -1,0 +1,9 @@
+{
+  "apk_sha256": "311f198afd40ff9ba610ea6a735fa34ec7e3892f16d7e21625d25f67425210fa",
+  "source": "Unmodified Google-signed APK already verified by build.py",
+  "tested_abi": "arm64-v8a",
+  "differently_signed_emulator_preload_removed": true,
+  "actual_typed": "",
+  "upstream_crashed": true,
+  "status": "UNAVAILABLE: unmodified upstream APK crashes in this ARM translation environment"
+}

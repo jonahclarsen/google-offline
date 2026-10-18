@@ -1,0 +1,44 @@
+{
+  "package": "com.google.android.inputmethod.local",
+  "label": "Gboard Offline",
+  "changed_files_beyond_permission_patch": [
+    "AndroidManifest.xml",
+    "classes.dex",
+    "classes2.dex",
+    "classes3.dex",
+    "classes4.dex",
+    "resources.arsc",
+    "classes5.dex",
+    "assets/offline-english-v311.zip"
+  ],
+  "internal_trusted_signer_sha256": "cfcbfc031313595e83681ddc8bac07ecd8d0d5c6b51de95871dc1ea9c619bdae",
+  "offline_bundle": {
+    "cloud_backup_disabled": true,
+    "blocked_explicit_broker_packages": {
+      "com.google.android.gms": "com.offline.denied.gms",
+      "com.google.android.tts": "com.offline.denied.tts",
+      "com.google.android.as": "com.offline.denied.as",
+      "com.google.android.as.oss": "com.offline.denied.as.oss",
+      "com.google.android.aicore": "com.offline.denied.aicore",
+      "com.google.android.googlequicksearchbox": "com.offline.denied.googlequicksearchbox",
+      "com.google.android.apps.bard": "com.offline.denied.apps.bard",
+      "com.google.android.gsf": "com.offline.denied.gsf",
+      "com.android.vending": "com.offline.vending"
+    },
+    "remapped_identifiers": {
+      "AndroidManifest.xml": 4,
+      "classes.dex": 12,
+      "classes2.dex": 7,
+      "classes3.dex": 4,
+      "classes4.dex": 0,
+      "resources.arsc": 3
+    },
+    "english_model_sha256": "fe97d40f34aa4fa6ff9d5a397dccc76de8fd3ea6b1cb22748f09d28ce708bb25",
+    "patched_methods": 5,
+    "network_and_external_voice_ime_providers": "disabled",
+    "english_locales": "English locales use the bundled en-US model"
+  },
+  "sha256": "afbedff3881af822aa0646bd3487edf712f8616360237ce0b7c9c1da4dfa57db",
+  "offline_dictation": "NOT VERIFIED",
+  "runtime": "not tested"
+}

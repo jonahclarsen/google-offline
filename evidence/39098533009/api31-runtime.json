@@ -1,0 +1,118 @@
+{
+  "arm64_translation_baseline": {
+    "apk_sha256": "311f198afd40ff9ba610ea6a735fa34ec7e3892f16d7e21625d25f67425210fa",
+    "source": "Unmodified Google-signed APK already verified by build.py",
+    "tested_abi": "arm64-v8a",
+    "differently_signed_emulator_preload_removed": true,
+    "actual_typed": "",
+    "upstream_crashed": true,
+    "status": "UNAVAILABLE: unmodified upstream APK crashes in this ARM translation environment"
+  },
+  "tested_apk_arch": "x86_64",
+  "installed_primary_cpu_abi": "x86_64",
+  "emulator_supported_abis": "x86_64,arm64-v8a",
+  "native_bridge": "libndk_translation.so",
+  "cloud_backup_allowed": false,
+  "keyboard_taps": [
+    "q",
+    "w",
+    "e"
+  ],
+  "actual_typed": "qwe",
+  "keyboard_typing_passed": true,
+  "gboard_direct_internet_granted": false,
+  "stock_gboard_unchanged": true,
+  "speech": {
+    "speech_recognizer_available": true,
+    "on_device_recognizer_available": true,
+    "speech_services": [
+      {
+        "package": "com.google.android.googlequicksearchbox",
+        "class": "com.google.android.voicesearch.serviceapi.GoogleRecognitionService",
+        "internet_granted": true
+      },
+      {
+        "package": "com.google.android.tts",
+        "class": "com.google.android.apps.speech.tts.googletts.service.GoogleTTSRecognitionService",
+        "internet_granted": true
+      }
+    ],
+    "offline_dictation": "NOT VERIFIED: service discovery is not a transcription test"
+  },
+  "expected_speech": "hello world",
+  "microphone_waveform_diagnostic": {
+    "passed": false,
+    "samples": 112640,
+    "rms": 1494.8071159912608,
+    "source_waveform_correlation": 0.2600726611821325,
+    "best_offset_samples": 36768
+  },
+  "microphone_diagnostic_scope": "Separate whole-wave timing comparison; actual local transcription independently verifies speech transport.",
+  "isolated_network_control": {
+    "url": "https://example.com/",
+    "success": false,
+    "error": "UnknownHostException"
+  },
+  "offline_voice": {
+    "passed": true,
+    "actual_dictated": "hello world hello world hello",
+    "keyboard_readiness": {
+      "passed": true,
+      "actual_typed": "qwe",
+      "attempts": 1
+    },
+    "microphone_path_verified_by_transcript": true,
+    "local_engine_confirmed": true,
+    "network_recognizer_started": false,
+    "gboard_crash_free": true,
+    "voice_button_found": true,
+    "voice_button": {
+      "package": "com.google.android.inputmethod.local",
+      "class": "android.speech.SpeechRecognizer.VoiceDictationButton",
+      "text": "",
+      "content-desc": "Use voice typing",
+      "resource-id": "com.google.android.inputmethod.local:id/key_pos_header_power_key",
+      "bounds": "[965,1048][1075,1164]",
+      "clickable": "true"
+    },
+    "accessibility_input_values": [
+      "hello world"
+    ]
+  },
+  "offline_dictation_passed": true,
+  "post_reboot_online_dictation_passed": true,
+  "isolation_scope": "First phase blocks all emulator IPv4/IPv6 egress. Second phase reboots and verifies another app has network access. The APK requires no phone firewall or VPN.",
+  "selected_keyboard_persisted_after_reboot": true,
+  "post_reboot_network_control": {
+    "url": "https://example.com/",
+    "status": 200,
+    "success": true
+  },
+  "post_reboot_voice": {
+    "passed": true,
+    "actual_dictated": "hello world",
+    "keyboard_readiness": {
+      "passed": true,
+      "actual_typed": "qwe",
+      "attempts": 2
+    },
+    "microphone_path_verified_by_transcript": true,
+    "local_engine_confirmed": true,
+    "network_recognizer_started": false,
+    "gboard_crash_free": true,
+    "voice_button_found": true,
+    "voice_button": {
+      "package": "com.google.android.inputmethod.local",
+      "class": "android.speech.SpeechRecognizer.VoiceDictationButton",
+      "text": "",
+      "content-desc": "Use voice typing",
+      "resource-id": "com.google.android.inputmethod.local:id/key_pos_header_power_key",
+      "bounds": "[965,1048][1075,1164]",
+      "clickable": "true"
+    },
+    "accessibility_input_values": [
+      "hello world"
+    ]
+  },
+  "scenario_passed": true
+}

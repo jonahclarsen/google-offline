@@ -1,0 +1,10 @@
+{
+  "run": "https://github.com/jonahclarsen/google-offline/actions/runs/39098533009",
+  "commit": "fa4b76b",
+  "build_reports_from": "experimental-gboard-and-evidence-api31",
+  "runtime_reports_from": {
+    "api31": "runtime-evidence-api31",
+    "api37": "runtime-evidence-api37.0"
+  },
+  "note": "API 37 rebuilt the same patch independently; the API 31 APK hashes in these build reports identify the API 31 artifacts only. Native ARM execution remains unverified."
+}

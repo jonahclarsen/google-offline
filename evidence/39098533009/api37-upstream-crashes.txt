@@ -1,0 +1,74 @@
+--------- beginning of crash
+10-18 04:57:56.591  2681  3300 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x8 in tid 3300 (DecoderWrapper-), pid 2681 (putmethod.latin)
+10-18 04:57:57.745  3540  3540 F DEBUG   : *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+10-18 04:57:57.745  3540  3540 F DEBUG   : Build fingerprint: 'google/sdk_gphone64_x86_64/emu64xa:17/CE2A.260420.019/15611780:userdebug/dev-keys'
+10-18 04:57:57.745  3540  3540 F DEBUG   : Kernel Release: '6.12.58-android16-6-gccafb60de224-ab14828483'
+10-18 04:57:57.745  3540  3540 F DEBUG   : Revision: '0'
+10-18 04:57:57.745  3540  3540 F DEBUG   : ABI: 'x86_64'
+10-18 04:57:57.745  3540  3540 F DEBUG   : Guest architecture: 'arm64'
+10-18 04:57:57.745  3540  3540 F DEBUG   : Timestamp: 2026-10-18 04:57:56.991258310+0000
+10-18 04:57:57.745  3540  3540 F DEBUG   : Process uptime: 22s
+10-18 04:57:57.745  3540  3540 F DEBUG   : Executable: /system/bin/app_process64
+10-18 04:57:57.745  3540  3540 F DEBUG   : Cmdline: com.google.android.inputmethod.latin
+10-18 04:57:57.745  3540  3540 F DEBUG   : pid: 2681, ppid: 439, tid: 3300, name: DecoderWrapper-  >>> com.google.android.inputmethod.latin <<<
+10-18 04:57:57.745  3540  3540 F DEBUG   : uid: 10234
+10-18 04:57:57.745  3540  3540 F DEBUG   : signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x0000000000000008 (write)
+10-18 04:57:57.745  3540  3540 F DEBUG   : Cause: null pointer dereference
+10-18 04:57:57.745  3540  3540 F DEBUG   :     rax 0000741520d2ce98  rbx 000074184fb14020  rcx 000074184f1c2f4c  rdx 0000741520d2ce98
+10-18 04:57:57.745  3540  3540 F DEBUG   :     r8  000074158b837650  r9  00000e8309e38eb6  r10 0000000000000000  r11 00004e8309e38eb6
+10-18 04:57:57.745  3540  3540 F DEBUG   :     r12 000074188761e128  r13 0000000000741520  r14 0000000000000000  r15 0000000000000000
+10-18 04:57:57.745  3540  3540 F DEBUG   :     rdi 000074184fb14020  rsi 00000000418a32c0
+10-18 04:57:57.745  3540  3540 F DEBUG   :     rbp 000074184fb14020  rsp 00007415b22543d0  rip 00000000418a32eb  err 0000000000000006
+10-18 04:57:57.745  3540  3540 F DEBUG   : 1 total frames
+10-18 04:57:57.745  3540  3540 F DEBUG   : backtrace:
+10-18 04:57:57.745  3540  3540 F DEBUG   :       #00 pc 000000000037f2eb  /memfd:exec (deleted)
+10-18 04:57:57.745  3540  3540 F DEBUG   : Note: To display stack pointer information, use the pbtombstone tool:
+10-18 04:57:57.745  3540  3540 F DEBUG   :         pbtombstone --display-sp tombstone_XX.pb
+10-18 04:57:57.776  3540  3540 F DEBUG   :     x0  0000000000000001  x1  0000000000000000  x2  000074151d800180  x3  00007415aa3dde94
+10-18 04:57:57.776  3540  3540 F DEBUG   :     x4  0000000000000002  x5  0000000000000000  x6  00007415aa3dde60  x7  00007415aa3dde40
+10-18 04:57:57.776  3540  3540 F DEBUG   :     x8  0000000000000000  x9  0000000000000000  x10 0000000000000000  x11 0000000000000003
+10-18 04:57:57.776  3540  3540 F DEBUG   :     x12 00007415aa3dd9e4  x13 0000000000000080  x14 0000000000000010  x15 000074174d4758c0
+10-18 04:57:57.776  3540  3540 F DEBUG   :     x16 000074174d475aa0  x17 000074157d73595c  x18 00007415a9200000  x19 0000000000000002
+10-18 04:57:57.776  3540  3540 F DEBUG   :     x20 0000000000000004  x21 0000000000000000  x22 000074171d428b40  x23 000074171d428b00
+10-18 04:57:57.776  3540  3540 F DEBUG   :     x24 00007415cd448504  x25 0000000000000000  x26 0000000000000000  x27 0000000000000001
+10-18 04:57:57.776  3540  3540 F DEBUG   :     x28 0000000000000000  x29 0000000000000000  lr  0000741520d2d1bc  sp  00007415aa3ddd40
+10-18 04:57:57.776  3540  3540 F DEBUG   :     pc  0000741520d2ce98  pst 0000000000000000  esr 0000000000000000  vg  0000000000000000
+10-18 04:57:57.776  3540  3540 F DEBUG   :   
+10-18 04:57:57.776  3540  3540 F DEBUG   : 22 total frames
+10-18 04:57:57.776  3540  3540 F DEBUG   : backtrace:
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #00 pc 0000000000af5e98  /data/app/~~CSdBzJpS4TK6xwYkHE1prA==/com.google.android.inputmethod.latin-xrB37wr_1sNCM0tsYu8k2w==/base.apk!libintegrated_shared_object.so (offset 0x8d0000) (BuildId: 4045b5e2f3e6dc01762f605ef64ed0fe0555d469)
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #01 pc 0000000000072e1c  /system/lib64/arm64/libc.so (call_once+148) (BuildId: c5c43713cd9681d690d172caf219e57d)
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #02 pc 00000000009fd5f8  /data/app/~~CSdBzJpS4TK6xwYkHE1prA==/com.google.android.inputmethod.latin-xrB37wr_1sNCM0tsYu8k2w==/base.apk!libintegrated_shared_object.so (offset 0x8d0000) (BuildId: 4045b5e2f3e6dc01762f605ef64ed0fe0555d469)
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #03 pc 00000000009fd5b4  /data/app/~~CSdBzJpS4TK6xwYkHE1prA==/com.google.android.inputmethod.latin-xrB37wr_1sNCM0tsYu8k2w==/base.apk!libintegrated_shared_object.so (offset 0x8d0000) (BuildId: 4045b5e2f3e6dc01762f605ef64ed0fe0555d469)
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #04 pc 00000000009e1fbc  /data/app/~~CSdBzJpS4TK6xwYkHE1prA==/com.google.android.inputmethod.latin-xrB37wr_1sNCM0tsYu8k2w==/base.apk!libintegrated_shared_object.so (offset 0x8d0000) (BuildId: 4045b5e2f3e6dc01762f605ef64ed0fe0555d469)
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #05 pc 00000000009e2644  /data/app/~~CSdBzJpS4TK6xwYkHE1prA==/com.google.android.inputmethod.latin-xrB37wr_1sNCM0tsYu8k2w==/base.apk!libintegrated_shared_object.so (offset 0x8d0000) (BuildId: 4045b5e2f3e6dc01762f605ef64ed0fe0555d469)
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #06 pc 00000000009e1070  /data/app/~~CSdBzJpS4TK6xwYkHE1prA==/com.google.android.inputmethod.latin-xrB37wr_1sNCM0tsYu8k2w==/base.apk!libintegrated_shared_object.so (offset 0x8d0000) (BuildId: 4045b5e2f3e6dc01762f605ef64ed0fe0555d469)
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #07 pc 0000000000a2adc0  /data/app/~~CSdBzJpS4TK6xwYkHE1prA==/com.google.android.inputmethod.latin-xrB37wr_1sNCM0tsYu8k2w==/base.apk!libintegrated_shared_object.so (offset 0x8d0000) (BuildId: 4045b5e2f3e6dc01762f605ef64ed0fe0555d469)
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #08 pc 00000000009f5260  /data/app/~~CSdBzJpS4TK6xwYkHE1prA==/com.google.android.inputmethod.latin-xrB37wr_1sNCM0tsYu8k2w==/base.apk!libintegrated_shared_object.so (offset 0x8d0000) (BuildId: 4045b5e2f3e6dc01762f605ef64ed0fe0555d469)
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #09 pc 0000000000a8cea0  /data/app/~~CSdBzJpS4TK6xwYkHE1prA==/com.google.android.inputmethod.latin-xrB37wr_1sNCM0tsYu8k2w==/base.apk!libintegrated_shared_object.so (offset 0x8d0000) (BuildId: 4045b5e2f3e6dc01762f605ef64ed0fe0555d469)
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #10 pc 0000000000a8ce20  /data/app/~~CSdBzJpS4TK6xwYkHE1prA==/com.google.android.inputmethod.latin-xrB37wr_1sNCM0tsYu8k2w==/base.apk!libintegrated_shared_object.so (offset 0x8d0000) (BuildId: 4045b5e2f3e6dc01762f605ef64ed0fe0555d469)
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #11 pc 0000000000ad30e8  /data/app/~~CSdBzJpS4TK6xwYkHE1prA==/com.google.android.inputmethod.latin-xrB37wr_1sNCM0tsYu8k2w==/base.apk!libintegrated_shared_object.so (offset 0x8d0000) (BuildId: 4045b5e2f3e6dc01762f605ef64ed0fe0555d469)
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #12 pc 0000000000ad308c  /data/app/~~CSdBzJpS4TK6xwYkHE1prA==/com.google.android.inputmethod.latin-xrB37wr_1sNCM0tsYu8k2w==/base.apk!libintegrated_shared_object.so (offset 0x8d0000) (BuildId: 4045b5e2f3e6dc01762f605ef64ed0fe0555d469)
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #13 pc 0000000000ad2f24  /data/app/~~CSdBzJpS4TK6xwYkHE1prA==/com.google.android.inputmethod.latin-xrB37wr_1sNCM0tsYu8k2w==/base.apk!libintegrated_shared_object.so (offset 0x8d0000) (BuildId: 4045b5e2f3e6dc01762f605ef64ed0fe0555d469)
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #14 pc 0000000000a9fb94  /data/app/~~CSdBzJpS4TK6xwYkHE1prA==/com.google.android.inputmethod.latin-xrB37wr_1sNCM0tsYu8k2w==/base.apk!libintegrated_shared_object.so (offset 0x8d0000) (BuildId: 4045b5e2f3e6dc01762f605ef64ed0fe0555d469)
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #15 pc 00000000009d87d4  /data/app/~~CSdBzJpS4TK6xwYkHE1prA==/com.google.android.inputmethod.latin-xrB37wr_1sNCM0tsYu8k2w==/base.apk!libintegrated_shared_object.so (offset 0x8d0000) (BuildId: 4045b5e2f3e6dc01762f605ef64ed0fe0555d469)
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #16 pc 0000000000a855bc  /data/app/~~CSdBzJpS4TK6xwYkHE1prA==/com.google.android.inputmethod.latin-xrB37wr_1sNCM0tsYu8k2w==/base.apk!libintegrated_shared_object.so (offset 0x8d0000) (BuildId: 4045b5e2f3e6dc01762f605ef64ed0fe0555d469)
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #17 pc 0000000000a7c9c8  /data/app/~~CSdBzJpS4TK6xwYkHE1prA==/com.google.android.inputmethod.latin-xrB37wr_1sNCM0tsYu8k2w==/base.apk!libintegrated_shared_object.so (offset 0x8d0000) (BuildId: 4045b5e2f3e6dc01762f605ef64ed0fe0555d469)
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #18 pc 0000000000ace4e0  /data/app/~~CSdBzJpS4TK6xwYkHE1prA==/com.google.android.inputmethod.latin-xrB37wr_1sNCM0tsYu8k2w==/base.apk!libintegrated_shared_object.so (offset 0x8d0000) (BuildId: 4045b5e2f3e6dc01762f605ef64ed0fe0555d469)
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #19 pc 00000000012fdd6c  /data/app/~~CSdBzJpS4TK6xwYkHE1prA==/com.google.android.inputmethod.latin-xrB37wr_1sNCM0tsYu8k2w==/base.apk!libintegrated_shared_object.so (offset 0x8d0000) (BuildId: 4045b5e2f3e6dc01762f605ef64ed0fe0555d469)
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #20 pc 00000000012a1168  /data/app/~~CSdBzJpS4TK6xwYkHE1prA==/com.google.android.inputmethod.latin-xrB37wr_1sNCM0tsYu8k2w==/base.apk!libintegrated_shared_object.so (offset 0x8d0000) (BuildId: 4045b5e2f3e6dc01762f605ef64ed0fe0555d469)
+10-18 04:57:57.776  3540  3540 F DEBUG   :       #21 pc 0000000000008018  /system/lib64/arm64/libnative_bridge_vdso.so (BuildId: 669de18a1b49081cead6374c9d053f94)
+10-18 04:57:57.777  3540  3540 F DEBUG   : 1 total frames
+10-18 04:57:57.777  3540  3540 F DEBUG   : backtrace:
+10-18 04:57:57.779  3540  3540 F DEBUG   : 1 total frames
+10-18 04:57:57.779  3540  3540 F DEBUG   : backtrace:
+10-18 04:57:57.780  3540  3540 F DEBUG   : 1 total frames
+10-18 04:57:57.780  3540  3540 F DEBUG   : backtrace:
+10-18 04:57:57.780  3540  3540 F DEBUG   : 1 total frames
+10-18 04:57:57.780  3540  3540 F DEBUG   : backtrace:
+10-18 04:57:57.780  3540  3540 F DEBUG   : 1 total frames
+10-18 04:57:57.780  3540  3540 F DEBUG   : backtrace:
+10-18 04:57:57.782  3540  3540 F DEBUG   : 1 total frames
+10-18 04:57:57.782  3540  3540 F DEBUG   : backtrace:
+10-18 04:57:57.790  3540  3540 F DEBUG   : 1 total frames
+10-18 04:57:57.790  3540  3540 F DEBUG   : backtrace:
