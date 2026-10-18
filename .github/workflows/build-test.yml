@@ -58,7 +58,7 @@ jobs:
       - name: Prepare synthetic microphone audio
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq pulseaudio pulseaudio-utils espeak-ng
+          sudo apt-get install -y -qq pulseaudio pulseaudio-utils libpulse-dev espeak-ng
           pulseaudio --start --exit-idle-time=-1
           pactl load-module module-null-sink sink_name=speech_input
           pactl load-module module-null-sink sink_name=discard_output
@@ -74,8 +74,15 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_2
+          disk-size: 4G
+          ram-size: 4096M
+          cores: 4
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-boot-anim -camera-back none
+          pre-emulator-launch-script: |
+            pactl info
+            ls -l /tmp/gboard-offline-pulse.sock /usr/lib/x86_64-linux-gnu/libpulse.so
+            $ANDROID_HOME/emulator/emulator -audio-help || true
           script: python3 scripts/emulator_test.py
       - name: Publish experimental APKs and evidence
         if: always()

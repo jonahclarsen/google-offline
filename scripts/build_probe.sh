@@ -3,9 +3,10 @@ set -euo pipefail
 tools="$ANDROID_HOME/build-tools/35.0.0"
 platform="$ANDROID_HOME/platforms/android-35/android.jar"
 mkdir -p work/probe/classes work/probe/dex
-javac -source 11 -target 11 -classpath "$platform" -d work/probe/classes tests/ProbeActivity.java
-"$tools/d8" --lib "$platform" --output work/probe/dex work/probe/classes/art/jonah/offlineprobe/ProbeActivity.class
-"$tools/aapt2" link -o work/probe/unsigned.apk -I "$platform" --manifest tests/AndroidManifest.xml
+javac -source 11 -target 11 -classpath "$platform" -d work/probe/classes tests/ProbeActivity.java tests/ProbeAccessibilityService.java
+"$tools/d8" --lib "$platform" --output work/probe/dex work/probe/classes/art/jonah/offlineprobe/*.class
+"$tools/aapt2" compile --dir tests/res -o work/probe/resources.zip
+"$tools/aapt2" link -o work/probe/unsigned.apk -I "$platform" --manifest tests/AndroidManifest.xml -R work/probe/resources.zip
 python3 - <<'PY'
 import zipfile
 with zipfile.ZipFile('work/probe/unsigned.apk', 'a') as apk:

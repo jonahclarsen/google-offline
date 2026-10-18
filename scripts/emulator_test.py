@@ -22,7 +22,14 @@ def adb(*args, check=True):
 
 def ui():
     adb("shell", "uiautomator", "dump", "/sdcard/window.xml")
-    return ET.fromstring(adb("shell", "cat", "/sdcard/window.xml"))
+    root = ET.fromstring(adb("shell", "cat", "/sdcard/window.xml"))
+    raw = adb("shell", "cat", "/sdcard/Android/data/art.jonah.offlineprobe/files/accessibility.json", check=False)
+    try:
+        for item in json.loads(raw):
+            ET.SubElement(root, "node", item)
+    except (ValueError, TypeError):
+        pass
+    return root
 
 
 def tap(node):
@@ -42,6 +49,8 @@ def main():
     (OUT / "preinstall-package.txt").write_text(adb("shell", "dumpsys", "package", ORIGINAL_PACKAGE))
     adb("install", "--no-incremental", "-r", str(OUT / "gboard-offline-coexist-experimental.apk"))
     adb("install", "--no-incremental", "-r", "work/probe/probe.apk")
+    adb("shell", "settings", "put", "secure", "enabled_accessibility_services", "art.jonah.offlineprobe/.ProbeAccessibilityService")
+    adb("shell", "settings", "put", "secure", "accessibility_enabled", "1")
     services = [line.strip() for line in adb("shell", "ime", "list", "-a", "-s").splitlines()]
     (OUT / "ime-services.txt").write_text("\n".join(services))
     ime = next(s for s in services if s.startswith(PACKAGE + "/"))
