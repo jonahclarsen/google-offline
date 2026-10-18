@@ -1,42 +1,84 @@
-# Gboard offline investigation
+# Gboard Offline — experimental
 
-Reproducible experimental APK patch and emulator evidence using free standard GitHub Actions runners in this public repository.
+A separately installed Gboard with a bundled English (US) speech model and direct internet access removed. It needs **no root and no VPN**, so an existing VPN can stay connected. Builds and emulator tests run on free standard GitHub Actions runners in this public repository.
 
-**This is not yet a verified offline dictation solution.** Removing Gboard's INTERNET permission blocks its direct network access; it does not revoke a separate Google speech service's permissions. Current workflows require the keyboard test and actual offline transcription to pass, including actual editor callbacks, local-engine logs, and no Gboard crash. A separate waveform correlation diagnostic helps identify audio-delivery failures; an actual locally recognized fixture transcript independently establishes that microphone transport worked, even if emulator timing disrupts the whole-wave comparison. Earlier experimental runs had weaker pass criteria. Neither emulator success nor permission removal establishes complete privacy on Samsung hardware.
+**This is a prototype, not yet a verified S10/S25 solution.** Actual offline speech recognition passes in x86-64 Android emulators. ARM64 execution and Samsung One UI remain unverified.
 
-## What the workflow checks
+## Verified results
 
-1. Downloads pinned ARM64 and x86-64 Gboard 17.3.3 standalone APKs from APKMirror. These are May 2026 releases selected because both architectures have complete APKs. Downloading uses the normal page flow with a pinned browser-compatible HTTP client; downloaded content must still pass Google's signature check.
-2. Verifies each file's SHA-256 and Android APK signature against Google's certificate (`f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83`). A compromised mirror cannot substitute an unsigned or differently signed APK without failing this check.
-3. Produces an APK with only the INTERNET declaration removed from binary Android XML, plus the required signature changes. Every other app payload byte stays intact. Separately produces a coexistence variant named **Gboard Offline** (`com.google.android.inputmethod.local`): this changes package references in the manifest, DEX strings, and resource table; preserves DEX string ordering; and updates DEX checksums. The clone also replaces one embedded development-certificate trust slot with its actual signing certificate digest, preserving the production Google certificate; otherwise Gboard throws a certificate error after re-signing. Native libraries stay unchanged in both variants. The coexistence build disables Android cloud backup and redirects nine explicit Google broker package identities, their content-provider authorities, and flattened component references to uninstalled offline aliases. These changes apply inside the clone; SDK Java class names stay intact. The coexistence variant additionally bundles Google's pinned English v311 model, supplies it to the small-model manager, and disables the network and external Voice IME recognizer providers. Five Java method bodies are replaced using dexlib2; original model-manager initialization is retained. The initial supported dictation locale is English (US), using the bundled en-US model. This work is experimental until an actual transcript passes. Both are aligned and signed with a persistent private key stored in GitHub Actions secrets.
-4. Verifies the resulting signature, ZIP alignment, permission list, and absence of unexpected payload changes. Checks ARM64 ELF load-segment alignment for compatibility with 16 KiB memory pages.
-5. Tests the coexistence variant in Android 12 (API 31) and Android 17 (API 37) Google APIs emulators, selects it as the keyboard, taps actual keyboard keys, and checks the resulting text. Checks that stock Gboard remains installed in the same location. Saves screenshots, package state, logs, and speech-service discovery. These are Android platform checks, not Samsung One UI hardware tests.
-6. Routes synthetic “hello world” speech through a virtual microphone after blocking **all** IPv4 and IPv6 emulator egress using root firewall rules. Records a guest microphone diagnostic, then checks whether Gboard produces the known text in the test editor without any text-injection API. The actual editor callback is authoritative; accessibility snapshots can retain stale text. A missing transcript fails the scenario. The test then reboots, requires the selected keyboard to persist, confirms a separate helper app can fetch an HTTPS page, and repeats local dictation while the emulator is otherwise online. The injected recognizer policy blocks the legacy network and external Voice IME providers. These root rules additionally isolate the emulator for the experiment; separate speech services on your phone would retain their own internet permissions.
+[Run 39098533009](https://github.com/jonahclarsen/google-offline/actions/runs/39098533009), commit `fa4b76b`:
 
-Runtime testing prefers the actual ARM64 APK when the emulator advertises ARM64 translation. It first checks the untouched Google-signed ARM64 APK: if that upstream baseline crashes, the report records the unsupported ARM test environment and uses x86-64 for Android platform checks. Such a fallback is never reported as an ARM64 pass. Samsung hardware and One UI validation remain outstanding. No recognition result is assumed from service discovery or from tapping a microphone.
+| Check | Android 12 / API 31 | Android 17 / API 37 |
+| --- | --- | --- |
+| Real keyboard taps produce `qwe` | Pass, x86-64 | Pass, x86-64 |
+| Actual “hello world” transcription with all guest IPv4/IPv6 egress blocked | Pass, local engine | Pass, local engine |
+| Keyboard selection survives reboot | Pass | Pass |
+| Local transcription after reboot while another app fetches HTTPS | Pass | Failed: empty transcript, microphone underruns |
+| ARM64 runtime | Unverified: untouched Google APK crashes under translation | Unverified: untouched Google APK crashes under translation |
 
-## Downloads and installation limitations
+[Committed reports and upstream crash controls](evidence/39098533009/) preserve these results beyond the temporary Actions artifacts. Build reports describe static checks only; the separate runtime reports establish transcription results. A newer workflow is investigating emulator microphone delivery after reboot.
 
-Open the latest workflow run and download an `experimental-gboard-and-evidence-api…` artifact. Files under `arm64/` are intended for the Galaxy S10 and S25. The **coexist** APK uses a separate package name and keyboard label so it can be installed alongside official Gboard; the other APK retains Google's package name and cannot update an official installation because the signing key differs. Keep a working keyboard installed before experimenting. Current CI builds share a persistent signing identity so updates can preserve app data; early experimental runs used disposable keys. No signing keys or upstream APKs are stored in git or published artifacts. Local builds without the signing secrets use a disposable test key.
+Both translated ARM controls used the **untouched Google-signed APK**, which crashed in `DecoderWrapper` with SIGSEGV at address `0x8`. The test therefore uses the x86-64 APK for Android platform checks. This does not establish that either ARM APK works on a phone. Free ARM Linux runners were also probed: they expose no `/dev/kvm`, and the current official Linux emulator downloads are x86-64.
 
-The user confirmed that official Gboard already dictates successfully on the S10 in airplane mode with Wi-Fi off. This establishes an existing offline setup, but a separately installed clone cannot inherit official Gboard's private model files.
+## Download and try
 
-The user's targets are English dictation on a Galaxy S10 with its last official Android release and on a future Galaxy S25 with the latest supported release. The initial platform test matrix is Android 12 and Android 17; actual installed versions and One UI behavior still require device verification.
+Open [Actions](https://github.com/jonahclarsen/google-offline/actions/workflows/build-test.yml), choose a completed run, and download its `experimental-gboard-and-evidence-api…` artifact. Runtime success/failure is recorded in `runtime-report.json`; a completed APK build alone is insufficient.
 
-## What must pass before calling this finished
+For an S10 or S25, the intended experimental file is:
 
-- Confirm the exact installed Android/One UI versions on the user's S10 and S25; English is the requested dictation language.
-- Confirm that the modified ARM64 app works on the actual target hardware; signed inputs and the bundled English model are already verified in CI.
-- Keep per-ABI results explicit, including any native-translation baseline failures.
-- Feed a known audio sample through Gboard's microphone flow and assert the actual recognized text, with networking available to the rest of the device.
-- Test installation and dictation on the user's device, including reboot and airplane-mode behavior.
+```
+arm64/gboard-offline-coexist-experimental.apk
+```
 
-If the required Google service refuses to run after re-signing, or the phone prevents replacing system Gboard, permission removal alone will not solve the problem. Reports must retain that limitation.
+1. Keep an existing working keyboard installed, then install the coexist APK.
+2. Enable **Gboard Offline** in Android's keyboard settings and select it as the active keyboard.
+3. Set the keyboard language to **English (US)** and allow microphone access.
+4. Open a text field and tap its microphone. The English model is included in the APK; no model download or VPN switch is needed.
+
+The clone has package ID `com.google.android.inputmethod.local`, so it installs beside official Gboard. It cannot inherit official Gboard's private settings or downloaded models. CI uses a persistent signing identity, allowing compatible future builds to update the clone. Its signing certificate SHA-256 is:
+
+```
+cfcbfc031313595e83681ddc8bac07ecd8d0d5c6b51de95871dc1ea9c619bdae
+```
+
+The separate `gboard-no-internet-experimental.apk` is a minimal permission-patch audit artifact. It lacks the bundled-model/provider hardening and cannot update official Gboard because its signature differs. Use the **coexist** variant for this experiment.
+
+## What changes
+
+- Removes `android.permission.INTERNET` and sets `allowBackup=false`.
+- Bundles Google's pinned English v311 small-RNNT model and supplies it directly to the internal model manager.
+- Disables network and external Voice IME recognizer providers by replacing five Java method bodies, retaining original model-manager initialization.
+- Redirects nine explicit Google broker package identities, content authorities, and component references to uninstalled offline aliases. SDK class names remain intact; other installed apps are unaffected.
+- Changes the package ID and visible keyboard name, and updates one internal certificate trust slot to the clone's actual signing certificate. Google's production certificate remains trusted.
+
+Native libraries remain byte-for-byte unchanged. The build checks APK signatures, permission declarations, ZIP alignment, changed payloads, and ARM64 ELF alignment for 16 KiB pages.
+
+These changes block direct networking and the identified service routes. They are **not a complete audit of every possible IPC route, dynamically constructed broker identity, Android backup mechanism, or Samsung system service**. Other apps retain their own permissions. Text dictated into a networked app is still available to that app.
+
+## Inputs and builds
+
+[sources.json](sources.json) pins complete ARM64 and x86-64 Gboard 17.3.3 APKs from APKMirror, including SHA-256 hashes. Every input must pass Google's APK signature verification and an independent check against Google's pinned legacy signing certificate. [offline-sources.json](offline-sources.json) pins the Google-hosted model and build dependencies. Original APKs, private signing keys, and downloaded tools are excluded from git.
+
+To build locally, install Python, JDK 21, Android SDK platform 35 and build-tools 35.0.0, set `ANDROID_HOME`, and run:
+
+```sh
+python3 -m pip install -r requirements-build.txt
+python3 -m unittest discover -s tests -p 'test_*.py'
+python3 scripts/build.py arm64
+```
+
+Local builds without signing secrets use a disposable test key. The [workflow](.github/workflows/build-test.yml) contains the full emulator setup. Its root firewall rules isolate only the disposable emulator during the first phase; installed phone APKs need neither root nor firewall configuration.
+
+The test injects a known audio fixture through the emulator microphone and requires real editor callbacks, local recognizer logs, the expected transcript, and no keyboard crash. The fixture text is never inserted by a text API. After reboot, another app must successfully fetch HTTPS while Gboard repeats local transcription. Microphone waveform comparisons are diagnostic because emulator scheduling can distort timing; an actual local transcript independently proves audio transport.
+
+## Remaining validation
+
+The user confirmed official Gboard already dictates offline on the S10, requested English, chose emulator testing for now, and needs to retain an existing VPN. Physical testing has therefore not been performed. A working ARM64 installation and dictation on the S10/S25, their exact Android/One UI versions, and complete Android 17 reboot behavior remain outstanding. Do not describe this prototype as fully verified on either Samsung phone.
 
 ## Sources
 
-- [GitHub: free standard runners for public repositories](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
+- [GitHub standard hosted runners](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
 - [Google signing certificate independently listed on APKMirror](https://www.apkmirror.com/apk/google-inc/gboard/gboard-the-google-keyboard-16-0-5-804347959-release/)
 - [Android speech recognizer and external recognition services](https://developer.android.com/reference/android/speech/SpeechRecognizer)
-- [Google's English offline model manifest](https://dl.google.com/android/voice/gboard/terse/superpacks-manifest-20210519.json)
-- [Android emulator ARM ABI translation](https://android-developers.googleblog.com/2020/03/run-arm-apps-on-android-emulator.html)
+- [Google's English model manifest](https://dl.google.com/android/voice/gboard/terse/superpacks-manifest-20210519.json)
+- [Android emulator ARM translation](https://android-developers.googleblog.com/2020/03/run-arm-apps-on-android-emulator.html)
