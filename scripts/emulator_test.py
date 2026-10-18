@@ -82,18 +82,36 @@ def main():
     speech = json.loads(adb("shell", "cat", "/sdcard/Android/data/art.jonah.offlineprobe/files/speech-services.json"))
     (OUT / "speech-services.json").write_text(json.dumps(speech, indent=2) + "\n")
     mic = next((n for n in tree.iter("node") if n.attrib.get("package") == PACKAGE and any(word in n.attrib.get("content-desc", "").lower() for word in ("voice", "microphone", "dictat"))), None)
+    # Root is available only on this disposable Google APIs emulator. Deny all
+    # guest egress, including external Google recognition services, before
+    # playing synthetic speech. This does not configure the user's phone.
+    adb("root")
+    adb("wait-for-device")
+    adb("shell", "iptables", "-I", "OUTPUT", "1", "-j", "DROP")
+    adb("shell", "ip6tables", "-I", "OUTPUT", "1", "-j", "DROP")
+    (OUT / "network-isolation.txt").write_text(adb("shell", "iptables", "-S", "OUTPUT") + adb("shell", "ip6tables", "-S", "OUTPUT"))
+    adb("emu", "avd", "hostmicon")
     if mic is not None:
         tap(mic)
+        time.sleep(3)
+        for _ in range(3):
+            subprocess.run(["paplay", "--device=speech_input", "work/hello-world.wav"], check=True)
+            time.sleep(2)
         time.sleep(5)
     screenshot("voice-attempt.png")
-    (OUT / "voice-ui.xml").write_text(ET.tostring(ui(), encoding="unicode"))
+    voice_tree = ui()
+    (OUT / "voice-ui.xml").write_text(ET.tostring(voice_tree, encoding="unicode"))
+    after_speech = [n.attrib.get("text", "") for n in voice_tree.iter("node") if n.attrib.get("class") == "android.widget.EditText"]
+    speech_passed = mic is not None and any("hello world" in re.sub(r"[^a-z ]", "", value.lower()) for value in after_speech)
     (OUT / "logcat.txt").write_text(adb("logcat", "-d", "-t", "2500"))
     report = {
         "keyboard_taps": typed, "input_values": input_values, "keyboard_typing_passed": keyboard_passed,
         "gboard_direct_internet_granted": direct_granted, "voice_button_found": mic is not None,
         "stock_gboard_unchanged": bool(original_before.strip()) and original_before == adb("shell", "pm", "path", ORIGINAL_PACKAGE),
-        "speech": speech, "offline_dictation_passed": False,
-        "offline_dictation_status": "NOT VERIFIED: requires a real audio-to-text result with all relevant speech components network-isolated",
+        "speech": speech, "input_values_after_speech": after_speech, "expected_speech": "hello world",
+        "offline_dictation_passed": speech_passed,
+        "offline_dictation_status": "PASS: synthetic speech produced expected text with all emulator IPv4/IPv6 egress blocked" if speech_passed else "NOT VERIFIED: expected offline transcript not obtained; inspect voice screenshot and logs",
+        "isolation_scope": "All emulator guest egress blocked via root iptables/ip6tables. No equivalent phone firewall is included.",
     }
     (OUT / "runtime-report.json").write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report, indent=2))

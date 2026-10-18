@@ -13,6 +13,8 @@ jobs:
       matrix:
         api: [31, 37]
     timeout-minutes: 35
+    env:
+      QEMU_AUDIO_DRV: pa
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - name: Test binary manifest patch boundaries
@@ -39,6 +41,16 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+      - name: Prepare synthetic microphone audio
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq pulseaudio pulseaudio-utils espeak-ng
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=speech_input
+          pactl load-module module-null-sink sink_name=discard_output
+          pactl set-default-source speech_input.monitor
+          pactl set-default-sink discard_output
+          espeak-ng -v en-us -s 135 -w work/hello-world.wav 'hello world'
       - name: Exercise patched keyboard in Android
         uses: reactivecircus/android-emulator-runner@4c44018e59b437e86cdfc41da381398f93ed8808
         with:
@@ -47,7 +59,7 @@ jobs:
           arch: x86_64
           profile: pixel_2
           disable-animations: true
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          emulator-options: -no-window -gpu swiftshader_indirect -no-boot-anim -camera-back none
           script: python3 scripts/emulator_test.py
       - name: Publish experimental APKs and evidence
         if: always()
@@ -65,7 +77,7 @@ jobs:
           p = pathlib.Path('dist/x86_64/runtime-report.json')
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
               f.write('## Experimental Gboard permission patch\n\n')
-              f.write('**Offline dictation is NOT verified. A successful job is not a speech-recognition pass.**\n\n')
+              f.write('**Read offline_dictation_passed below. A successful build/keyboard check is not a speech-recognition pass or a phone privacy guarantee.**\n\n')
               if p.exists():
                   f.write('```json\n' + p.read_text() + '\n```\n')
           PY

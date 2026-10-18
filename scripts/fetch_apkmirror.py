@@ -18,8 +18,9 @@ class Links(HTMLParser):
 def fetch_apkmirror(url):
     def checked_url(link):
         parsed = urlparse(link)
-        if parsed.scheme != "https" or not (parsed.hostname == "apkmirror.com" or (parsed.hostname or "").endswith(".apkmirror.com")):
-            raise ValueError("Unexpected download host")
+        allowed = parsed.hostname == "apkmirror.com" or (parsed.hostname or "").endswith(".apkmirror.com") or parsed.hostname == "eb5e7388c3df147b74dd2379b7cf8323.r2.cloudflarestorage.com"
+        if parsed.scheme != "https" or not allowed:
+            raise ValueError(f"Unexpected download host: {parsed.scheme}://{parsed.hostname}")
         return link
 
     with requests.Session(impersonate="chrome") as session:
