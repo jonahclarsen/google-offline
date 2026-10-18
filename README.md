@@ -1,36 +1,36 @@
 # Gboard Offline — experimental
 
-A separately installed Gboard with a bundled English (US) speech model and direct internet access removed. It needs **no root and no VPN**, so an existing VPN can stay connected. Builds and emulator tests run on free standard GitHub Actions runners in this public repository.
+A separately installed Gboard with a bundled English (US) speech model and direct internet access removed. It needs **no root and no VPN**, so an existing VPN can stay connected. Builds and platform tests run on free standard GitHub Actions runners in this public repository.
 
-**This is a prototype, not yet a verified S10/S25 solution.** Actual offline speech recognition passes in x86-64 Android emulators. ARM64 execution and Samsung One UI remain unverified.
+**The released ARM64 APK passed the full native Android 12 emulator scenario. Android 17/S25 and physical Samsung hardware remain unverified.**
+
+[Download the experimental ARM64 APK](https://github.com/jonahclarsen/google-offline/releases/download/v0.1.0-experimental/gboard-offline-arm64.apk) · [Release, checksums, and evidence](https://github.com/jonahclarsen/google-offline/releases/tag/v0.1.0-experimental)
 
 ## Verified results
 
-[Run 39098533009](https://github.com/jonahclarsen/google-offline/actions/runs/39098533009), commit `fa4b76b`:
-
-| Check | Android 12 / API 31 | Android 17 / API 37 |
+| Target | Result | Evidence |
 | --- | --- | --- |
-| Real keyboard taps produce `qwe` | Pass, x86-64 | Pass, x86-64 |
-| Actual “hello world” transcription with all guest IPv4/IPv6 egress blocked | Pass, local engine | Pass, local engine |
-| Keyboard selection survives reboot | Pass | Pass |
-| Local transcription after reboot while another app fetches HTTPS | Pass | Failed: empty transcript, microphone underruns |
-| ARM64 runtime | Unverified: untouched Google APK crashes under translation | Unverified: untouched Google APK crashes under translation |
+| Native ARM64 Android 12 / API 31 | Full scenario passed on the **exact released APK** | [Report and screenshot](evidence/native-arm64-api31/) |
+| x86-64 Android 12 / API 31 | Full scenario passed | [CI report](evidence/39098533009/api31-runtime.json) |
+| x86-64 Android 17 / API 37 | Isolated local transcription passed; complete reboot scenario not yet verified | [CI report](evidence/39098533009/api37-runtime.json) |
+| Native ARM64 Android 17 / API 37 | Unverified: emulator microphone transport failed | [Recorded limitations](evidence/native-arm64-api37/) |
+| Samsung S10/S25 hardware and One UI | Not tested; the user requested emulator tests for now | Device validation remains outstanding |
 
-[Committed reports and upstream crash controls](evidence/39098533009/) preserve these results beyond the temporary Actions artifacts. Build reports describe static checks only; the separate runtime reports establish transcription results. A newer workflow is investigating emulator microphone delivery after reboot.
+The full scenario requires real `qwe` keyboard taps, actual “hello world” transcription with **all guest IPv4/IPv6 egress blocked**, a reboot preserving the selected keyboard, and another local transcription while a separate helper successfully fetches HTTPS. The expected phrase is never inserted by a text API. Runtime reports retain every attempted transcription; the current harness permits up to three attempts per phase and still requires an actual local transcript with no keyboard crash.
 
-Both translated ARM controls used the **untouched Google-signed APK**, which crashed in `DecoderWrapper` with SIGSEGV at address `0x8`. The test therefore uses the x86-64 APK for Android platform checks. This does not establish that either ARM APK works on a phone. Free ARM Linux runners were also probed: they expose no `/dev/kvm`, and the current official Linux emulator downloads are x86-64.
+Free Linux runners test x86-64 Android images. Their ARM translation crashes even with the untouched Google-signed APK, so translation is never reported as an ARM64 pass. Native ARM testing additionally used an Apple Silicon Mac with Hypervisor.Framework. Google's original ARM APK and the clone both crashed in `DecoderWrapper` under translation; the actual ARM64 clone remained crash-free in the native Android 12 test.
 
-## Download and try
-
-Open [Actions](https://github.com/jonahclarsen/google-offline/actions/workflows/build-test.yml), choose a completed run, and download its `experimental-gboard-and-evidence-api…` artifact. Runtime success/failure is recorded in `runtime-report.json`; a completed APK build alone is insufficient.
-
-For an S10 or S25, the intended experimental file is:
+The released APK SHA-256 is:
 
 ```
-arm64/gboard-offline-coexist-experimental.apk
+afbedff3881af822aa0646bd3487edf712f8616360237ce0b7c9c1da4dfa57db
 ```
 
-1. Keep an existing working keyboard installed, then install the coexist APK.
+The [committed reports](evidence/) preserve results beyond temporary Actions artifact expiry. Build reports describe static checks only; separate runtime reports establish transcription. The release evidence archive contains the native Android 12 logs and synthetic microphone fixtures. Android 17 audio transport is still being investigated; no failed attempt is treated as a pass.
+
+## Install the experimental build
+
+1. Keep an existing working keyboard installed, then install [gboard-offline-arm64.apk](https://github.com/jonahclarsen/google-offline/releases/download/v0.1.0-experimental/gboard-offline-arm64.apk).
 2. Enable **Gboard Offline** in Android's keyboard settings and select it as the active keyboard.
 3. Set the keyboard language to **English (US)** and allow microphone access.
 4. Open a text field and tap its microphone. The English model is included in the APK; no model download or VPN switch is needed.
@@ -41,7 +41,7 @@ The clone has package ID `com.google.android.inputmethod.local`, so it installs 
 cfcbfc031313595e83681ddc8bac07ecd8d0d5c6b51de95871dc1ea9c619bdae
 ```
 
-The separate `gboard-no-internet-experimental.apk` is a minimal permission-patch audit artifact. It lacks the bundled-model/provider hardening and cannot update official Gboard because its signature differs. Use the **coexist** variant for this experiment.
+[Actions](https://github.com/jonahclarsen/google-offline/actions/workflows/build-test.yml) also publishes a short-lived ARM64 coexist APK after successful Android 12 checks and retains small runtime evidence from both versions. The local build additionally produces `gboard-no-internet-experimental.apk`, a minimal permission-patch audit artifact. That variant lacks bundled-model/provider hardening and cannot update official Gboard because its signature differs. Use the **coexist** variant or the release APK for this experiment.
 
 ## What changes
 
@@ -71,9 +71,22 @@ Local builds without signing secrets use a disposable test key. The [workflow](.
 
 The test injects a known audio fixture through the emulator microphone and requires real editor callbacks, local recognizer logs, the expected transcript, and no keyboard crash. The fixture text is never inserted by a text API. After reboot, another app must successfully fetch HTTPS while Gboard repeats local transcription. Microphone waveform comparisons are diagnostic because emulator scheduling can distort timing; an actual local transcript independently proves audio transport.
 
+## Repeat native ARM tests
+
+On an ARM host with a supported native Android emulator, install JDK 21, current Android command-line tools (22), SDK platform/build-tools 35, and the Google APIs ARM64 image for API 31 or 37.0. Build the ARM APK, then prepare the helper and fixture:
+
+```sh
+python3 -m pip install -r requirements-native-test.txt
+bash scripts/build_probe.sh
+espeak-ng -v en-us -s 135 -w work/hello-world.wav 'hello world'
+python3 scripts/native_emulator_test.py 31
+```
+
+Set `ANDROID_HOME` and `JAVA_HOME` and put their tools on `PATH`. The helper can generate its own local test signing key. The wrapper generates the audio protocol bindings, starts a headless emulator on the permanent fixture ports in [emulator-settings.json](tests/emulator-settings.json), runs the scenario, and shuts it down. Its gRPC endpoint uses ephemeral token authentication and loopback binding; tokens are excluded from evidence. Passing `37.0` runs the currently unverified native Android 17 microphone experiment.
+
 ## Remaining validation
 
-The user confirmed official Gboard already dictates offline on the S10, requested English, chose emulator testing for now, and needs to retain an existing VPN. Physical testing has therefore not been performed. A working ARM64 installation and dictation on the S10/S25, their exact Android/One UI versions, and complete Android 17 reboot behavior remain outstanding. Do not describe this prototype as fully verified on either Samsung phone.
+The user confirmed official Gboard already dictates offline on the S10, requested English, chose emulator testing for now, and needs to retain an existing VPN. Physical testing has therefore not been performed. Native ARM64 Android 12 is verified at the emulator level. An installation and dictation on the S10/S25 themselves, their exact Android/One UI versions, and complete Android 17 behavior remain outstanding. Do not describe this prototype as verified on either Samsung phone.
 
 ## Sources
 
