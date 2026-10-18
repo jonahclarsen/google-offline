@@ -30,14 +30,25 @@ def verify_capture(pcm_path, wav_path):
         denominator = math.sqrt(energy * sum(value * value for value in segment))
         return sum(a * b for a, b in zip(short, segment)) / denominator if denominator else 0.0
 
+    # Locate the utterance using its energy envelope first. A coarse scan of
+    # the raw waveform can miss the correct delay due to pitch phase changes.
+    block = 80
+    def envelope(values):
+        return [math.sqrt(sum(value * value for value in values[start:start + block]) / block) for start in range(0, len(values) - block + 1, block)]
+    source_envelope, capture_envelope = envelope(reference), envelope(recorded)
+    source_energy = sum(value * value for value in source_envelope)
+    coarse, envelope_best = 0, 0.0
+    for index in range(max(0, len(capture_envelope) - len(source_envelope)) + 1):
+        segment = capture_envelope[index:index + len(source_envelope)]
+        if len(segment) != len(source_envelope):
+            continue
+        denominator = math.sqrt(source_energy * sum(value * value for value in segment))
+        value = sum(a * b for a, b in zip(source_envelope, segment)) / denominator if denominator else 0.0
+        if value > envelope_best:
+            coarse, envelope_best = index * block, value
     maximum = max(0, len(recorded) - len(reference))
     best_offset, best = 0, 0.0
-    for offset in range(0, maximum + 1, 32):
-        value = correlation(offset)
-        if value > best:
-            best_offset, best = offset, value
-    coarse = best_offset
-    for offset in range(max(0, coarse - 32), min(maximum, coarse + 32) + 1):
+    for offset in range(max(0, coarse - block * 2), min(maximum, coarse + block * 2) + 1):
         value = correlation(offset)
         if value > best:
             best_offset, best = offset, value
