@@ -3,6 +3,7 @@ import argparse
 import json
 import os
 import platform
+import socket
 import subprocess
 import sys
 import time
@@ -31,8 +32,14 @@ def main():
                     "tests/microphone.proto"], check=True)
     # These ports were selected once with secrets.randbelow and are permanent.
     settings = json.loads(Path("tests/emulator-settings.json").read_text())
+    for port in (settings["console_port"], settings["console_port"] + 1, settings["grpc_port"]):
+        with socket.socket() as check:
+            try:
+                check.bind(("127.0.0.1", port))
+            except OSError as error:
+                raise RuntimeError(f"Fixture port {port} is in use; stop its existing test emulator first") from error
     name = "offline-arm" + args.api.replace(".", "-")
-    env = dict(os.environ, ANDROID_SDK_ROOT=str(sdk),
+    env = dict(os.environ, ANDROID_HOME=str(sdk), ANDROID_SDK_ROOT=str(sdk),
                ANDROID_AVD_HOME=str(root / "work/native-avd"),
                ANDROID_USER_HOME=str(root / "work/native-android"),
                ANDROID_SERIAL=f"emulator-{settings['console_port']}",
