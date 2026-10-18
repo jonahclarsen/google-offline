@@ -100,6 +100,35 @@ def network_control():
     raise RuntimeError("Network control did not finish")
 
 
+def exercise_keyboard(prefix=""):
+    # A visible IME surface can precede usable touch handlers after cold boot.
+    # Wait for real key taps to change the real editor; stale accessibility
+    # windows and requested insets are insufficient readiness signals.
+    if probe_file("input.txt").strip():
+        raise RuntimeError("Keyboard readiness test must start with an empty editor")
+    for attempt in range(15):
+        if attempt:
+            value = probe_file("input.txt").strip()
+            if value:
+                adb("shell", "input", "keyevent", *(["67"] * min(len(value), 32)))
+                time.sleep(0.3)
+        for letter in "qwe":
+            tap(layout_target(letter))
+            time.sleep(0.25)
+        time.sleep(1)
+        value = probe_file("input.txt").strip()
+        if value == "qwe":
+            screenshot(f"{prefix}keyboard-ready.png")
+            adb("shell", "input", "keyevent", "67", "67", "67")
+            for _ in range(20):
+                if not probe_file("input.txt").strip():
+                    return {"passed": True, "actual_typed": value, "attempts": attempt + 1}
+                time.sleep(0.1)
+            raise RuntimeError("Could not clear readiness keystrokes before speech")
+        time.sleep(1)
+    raise RuntimeError("Real keyboard taps did not become interactive after startup")
+
+
 def prepare_speech_loop():
     with wave.open("work/hello-world.wav", "rb") as source:
         parameters = source.getparams()
@@ -112,8 +141,9 @@ def prepare_speech_loop():
 
 def dictation_attempt(prefix=""):
     adb("emu", "avd", "hostmicon")
-    tree = wait_keyboard()
-    time.sleep(2)
+    readiness = exercise_keyboard(prefix)
+    tree = ui()
+    time.sleep(1)
     if probe_file("input.txt").strip():
         raise RuntimeError("Speech test must start from an empty real editor")
     mic = next((n for n in tree.iter("node") if n.attrib.get("package") == PACKAGE and any(word in n.attrib.get("content-desc", "").lower() for word in ("voice", "microphone", "dictat"))), None)
@@ -159,7 +189,7 @@ def dictation_attempt(prefix=""):
     # The fixture phrase is never inserted by any text API. A real local
     # transcript proves the microphone path even when the separate whole-wave
     # correlation diagnostic is disrupted by emulator audio timing jitter.
-    return {"passed": speech_passed, "actual_dictated": actual_dictated,
+    return {"passed": speech_passed, "actual_dictated": actual_dictated, "keyboard_readiness": readiness,
             "microphone_path_verified_by_transcript": "hello world" in re.sub(r"[^a-z ]", "", actual_dictated.lower()),
             "local_engine_confirmed": local_engine_confirmed,
             "network_recognizer_started": network_recognizer_started,
