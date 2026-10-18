@@ -1,0 +1,10 @@
+{
+  "apk_source_run": "https://github.com/jonahclarsen/google-offline/actions/runs/39098533009",
+  "apk_build_commit": "fa4b76b",
+  "test_commit": "c124262",
+  "test_host": "Apple Silicon, native ARM64, Hypervisor.Framework",
+  "emulator_build": "16428233 (37.2.12)",
+  "system_image": "android-31/google_apis/arm64-v8a r11",
+  "system_image_sha1": "21bcb00f4ac3dc91c4040da7980b8c5f3c681781",
+  "scope": "Native Android emulator, not physical Samsung hardware"
+}
