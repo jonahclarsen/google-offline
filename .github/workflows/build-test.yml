@@ -68,12 +68,12 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq pulseaudio pulseaudio-utils libpulse-dev espeak-ng xvfb libxcb-cursor0 libxkbcommon-x11-0
           pulseaudio --start --exit-idle-time=-1
-          pactl load-module module-null-sink sink_name=speech_input
+          pactl load-module module-null-sink sink_name=speech_input rate=16000 channels=1 channel_map=mono
           pactl load-module module-null-sink sink_name=discard_output
           pactl set-default-source speech_input.monitor
           pactl set-default-sink discard_output
           pactl load-module module-native-protocol-unix socket=/tmp/gboard-offline-pulse.sock auth-anonymous=1
-          printf '%s\n' 'PULSE_SERVER=unix:/tmp/gboard-offline-pulse.sock' 'QEMU_PA_SERVER=unix:/tmp/gboard-offline-pulse.sock' 'PULSE_SOURCE=speech_input.monitor' 'QEMU_PA_SOURCE=speech_input.monitor' 'PULSE_SINK=discard_output' 'QEMU_PA_SINK=discard_output' >> "$GITHUB_ENV"
+          printf '%s\n' 'PULSE_SERVER=unix:/tmp/gboard-offline-pulse.sock' 'QEMU_PA_SERVER=unix:/tmp/gboard-offline-pulse.sock' 'PULSE_SOURCE=speech_input.monitor' 'QEMU_PA_SOURCE=speech_input.monitor' 'QEMU_PA_SAMPLES=1024' 'PULSE_SINK=discard_output' 'QEMU_PA_SINK=discard_output' >> "$GITHUB_ENV"
           espeak-ng -v en-us -s 135 -w work/hello-world.wav 'hello world'
           Xvfb -displayfd 3 -screen 0 1080x1920x24 -nolisten tcp 3>work/xvfb-display >work/xvfb.log 2>&1 &
           for attempt in {1..50}; do

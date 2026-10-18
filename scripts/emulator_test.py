@@ -4,6 +4,7 @@ import json
 import re
 import subprocess
 import time
+import wave
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from audio_control import verify_capture
@@ -85,9 +86,20 @@ def network_control():
     raise RuntimeError("Network control did not finish")
 
 
+def prepare_speech_loop():
+    with wave.open("work/hello-world.wav", "rb") as source:
+        parameters = source.getparams()
+        samples = source.readframes(source.getnframes())
+    with wave.open("work/speech-loop.wav", "wb") as output:
+        output.setparams(parameters)
+        gap = bytes(int(parameters.framerate * 0.25) * parameters.nchannels * parameters.sampwidth)
+        output.writeframes((samples + gap) * 8)
+
+
 def dictation_attempt(prefix=""):
     adb("emu", "avd", "hostmicon")
     tree = wait_keyboard()
+    time.sleep(2)
     if probe_file("input.txt").strip():
         raise RuntimeError("Speech test must start from an empty real editor")
     mic = next((n for n in tree.iter("node") if n.attrib.get("package") == PACKAGE and any(word in n.attrib.get("content-desc", "").lower() for word in ("voice", "microphone", "dictat"))), None)
@@ -96,15 +108,26 @@ def dictation_attempt(prefix=""):
     pid = adb("shell", "pidof", "-s", PACKAGE).strip()
     with (OUT / f"{prefix}gboard-voice-logcat.txt").open("w") as voice_log:
         capture = subprocess.Popen(["adb", "logcat", "--pid", pid, "-v", "threadtime"], stdout=voice_log, stderr=subprocess.STDOUT)
+        player = None
         try:
             if mic is not None:
+                # Keep one live PulseAudio stream running across mic startup,
+                # avoiding source suspension between tiny playback processes.
+                player = subprocess.Popen(["paplay", "--device=speech_input", "--latency-msec=50", "work/speech-loop.wav"])
+                time.sleep(1)
                 tap(mic)
-                time.sleep(0.5)
-                for _ in range(4):
-                    subprocess.run(["paplay", "--device=speech_input", "work/hello-world.wav"], check=True)
-                    time.sleep(0.3)
-                time.sleep(5)
+                time.sleep(1)
+                screenshot(f"{prefix}voice-listening.png")
+                (OUT / f"{prefix}audio-state.txt").write_text(adb("shell", "dumpsys", "audio"))
+                (OUT / f"{prefix}pulse-source-outputs.txt").write_text(subprocess.check_output(["pactl", "list", "source-outputs"], text=True))
+                player.wait(timeout=40)
+                if player.returncode:
+                    raise RuntimeError("Synthetic speech playback failed")
+                time.sleep(3)
         finally:
+            if player is not None and player.poll() is None:
+                player.terminate()
+                player.wait(timeout=5)
             capture.terminate()
             capture.wait(timeout=5)
     screenshot(f"{prefix}voice-attempt.png")
@@ -135,6 +158,8 @@ def main():
     adb("logcat", "-c")
     import shutil
     shutil.copyfile("work/hello-world.wav", OUT / "source-speech.wav")
+    prepare_speech_loop()
+    shutil.copyfile("work/speech-loop.wav", OUT / "speech-loop.wav")
     (OUT / "preinstalled-packages.txt").write_text(adb("shell", "pm", "list", "packages", "-f"))
     original_before = adb("shell", "pm", "path", ORIGINAL_PACKAGE)
     (OUT / "preinstall-package.txt").write_text(adb("shell", "dumpsys", "package", ORIGINAL_PACKAGE))
