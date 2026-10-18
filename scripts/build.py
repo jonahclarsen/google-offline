@@ -33,9 +33,11 @@ def build(arch):
     if original_hash != source["sha256"]:
         raise RuntimeError("Original APK SHA-256 mismatch")
     signature = run(tools / "apksigner", "verify", "--verbose", "--print-certs", original)
-    fingerprints = re.findall(r"Signer #\d+ certificate SHA-256 digest: ([0-9a-f]+)", signature)
+    (dist / "original-signature.txt").write_text(signature)
+    fingerprints = re.findall(r"Signer #\d+ certificate SHA-256 digest: ([0-9a-fA-F]+)", signature)
+    fingerprints = [value.lower() for value in fingerprints]
     if fingerprints != [GOOGLE_CERT]:
-        raise RuntimeError(f"Unexpected original signer: {fingerprints}")
+        raise RuntimeError(f"Unexpected original signer: {fingerprints}\n{signature}")
     before = run(tools / "aapt2", "dump", "badging", original)
     if "package: name='com.google.android.inputmethod.latin'" not in before:
         raise RuntimeError("Wrong package")
