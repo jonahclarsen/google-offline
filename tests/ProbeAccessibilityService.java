@@ -14,18 +14,25 @@ import org.json.JSONObject;
 /** Test-emulator helper: inspect IME windows, which shell uiautomator omits. */
 public class ProbeAccessibilityService extends AccessibilityService {
     private final android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
-    private final Runnable save = this::snapshot;
+    private final Runnable save = new Runnable() {
+        @Override public void run() {
+            snapshot();
+            handler.postDelayed(this, 500);
+        }
+    };
 
     @Override public void onServiceConnected() {
         AccessibilityServiceInfo info = getServiceInfo();
         info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS | AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS | AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS;
         setServiceInfo(info);
-        snapshot();
+        handler.post(save);
     }
 
-    @Override public void onAccessibilityEvent(AccessibilityEvent event) {
+    @Override public void onAccessibilityEvent(AccessibilityEvent event) {}
+
+    @Override public void onDestroy() {
         handler.removeCallbacks(save);
-        handler.postDelayed(save, 100);
+        super.onDestroy();
     }
 
     @Override public void onInterrupt() {}
