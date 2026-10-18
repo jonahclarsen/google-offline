@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Exercise the real keyboard UI; report speech service prerequisites honestly."""
 import json
+import hashlib
 import os
 import re
 import subprocess
+import sys
 import time
 import wave
 import xml.etree.ElementTree as ET
@@ -15,6 +17,19 @@ PACKAGE = "com.google.android.inputmethod.local"
 ORIGINAL_PACKAGE = "com.google.android.inputmethod.latin"
 TEST_ARCH = "x86_64"
 OUT = Path("dist") / TEST_ARCH
+AUDIO_TRANSPORT = os.environ.get("GBOARD_AUDIO_TRANSPORT", "pulse")
+
+
+def microphone_on():
+    adb("emu", "avd", "hostmicoff" if AUDIO_TRANSPORT == "grpc" else "hostmicon")
+
+
+def play_audio(path):
+    if AUDIO_TRANSPORT == "grpc":
+        return subprocess.Popen([sys.executable, "scripts/inject_microphone.py", str(path)])
+    if AUDIO_TRANSPORT != "pulse":
+        raise RuntimeError("Unknown microphone transport")
+    return subprocess.Popen(["paplay", "--device=speech_input", "--latency-msec=50", str(path)])
 
 
 def adb(*args, check=True):
@@ -143,11 +158,13 @@ def prepare_speech_loop():
 def capture_microphone_control(prefix=""):
     # Repeat after reboot too: host playback success does not establish that
     # Android's restarted audio HAL receives anything other than silence.
-    adb("emu", "avd", "hostmicon")
+    microphone_on()
     start_probe("--ez", "record_audio", "true", "--ez", "check_network", "true")
     time.sleep(2)
     for _ in range(2):
-        subprocess.run(["paplay", "--device=speech_input", "work/hello-world.wav"], check=True)
+        player = play_audio("work/hello-world.wav")
+        if player.wait(timeout=40):
+            raise RuntimeError("Microphone control playback failed")
         time.sleep(0.5)
     time.sleep(4)
     output = OUT / f"{prefix}microphone-control.pcm"
@@ -156,7 +173,7 @@ def capture_microphone_control(prefix=""):
 
 
 def dictation_attempt(prefix=""):
-    adb("emu", "avd", "hostmicon")
+    microphone_on()
     readiness = exercise_keyboard(prefix)
     tree = ui()
     time.sleep(1)
@@ -173,13 +190,14 @@ def dictation_attempt(prefix=""):
             if mic is not None:
                 # Keep one live PulseAudio stream running across mic startup,
                 # avoiding source suspension between tiny playback processes.
-                player = subprocess.Popen(["paplay", "--device=speech_input", "--latency-msec=50", "work/speech-loop.wav"])
+                player = play_audio("work/speech-loop.wav")
                 time.sleep(1)
                 tap(mic)
                 time.sleep(1)
                 screenshot(f"{prefix}voice-listening.png")
                 (OUT / f"{prefix}audio-state.txt").write_text(adb("shell", "dumpsys", "audio"))
-                (OUT / f"{prefix}pulse-source-outputs.txt").write_text(subprocess.check_output(["pactl", "list", "source-outputs"], text=True))
+                if AUDIO_TRANSPORT == "pulse":
+                    (OUT / f"{prefix}pulse-source-outputs.txt").write_text(subprocess.check_output(["pactl", "list", "source-outputs"], text=True))
                 player.wait(timeout=40)
                 if player.returncode:
                     raise RuntimeError("Synthetic speech playback failed")
@@ -306,6 +324,8 @@ def main():
     offline_voice = dictation_attempt()
     report = {
         "arm64_translation_baseline": ARM_BASELINE,
+        "tested_apk_sha256": hashlib.sha256((OUT / "gboard-offline-coexist-experimental.apk").read_bytes()).hexdigest(),
+        "audio_transport": AUDIO_TRANSPORT,
         "tested_apk_arch": TEST_ARCH, "installed_primary_cpu_abi": primary_abi[1],
         "emulator_supported_abis": adb("shell", "getprop", "ro.product.cpu.abilist").strip(),
         "native_bridge": adb("shell", "getprop", "ro.dalvik.vm.native.bridge").strip(),
