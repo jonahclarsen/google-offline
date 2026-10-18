@@ -118,12 +118,15 @@ jobs:
             $ANDROID_HOME/emulator/emulator -audio-help || true
           script: python3 scripts/emulator_test.py
       - name: Publish experimental APKs and evidence
-        if: always()
+        if: success() && matrix.api == '31'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: experimental-gboard-and-evidence-api${{ matrix.api }}
-          path: dist/
-          retention-days: 7
+          path: |
+            dist/arm64/gboard-offline-coexist-experimental.apk
+            dist/arm64/clone-report.json
+            dist/x86_64/runtime-report.json
+          retention-days: 1
           if-no-files-found: error
       - name: Publish small runtime evidence separately
         if: always()
