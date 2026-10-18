@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Exercise the real keyboard UI; report speech service prerequisites honestly."""
 import json
+import os
 import re
 import subprocess
 import time
@@ -11,7 +12,8 @@ from audio_control import verify_capture
 
 PACKAGE = "com.google.android.inputmethod.local"
 ORIGINAL_PACKAGE = "com.google.android.inputmethod.latin"
-OUT = Path("dist/x86_64")
+TEST_ARCH = "x86_64"
+OUT = Path("dist") / TEST_ARCH
 
 
 def adb(*args, check=True):
@@ -175,7 +177,8 @@ def main():
     (OUT / "preinstalled-packages.txt").write_text(adb("shell", "pm", "list", "packages", "-f"))
     original_before = adb("shell", "pm", "path", ORIGINAL_PACKAGE)
     (OUT / "preinstall-package.txt").write_text(adb("shell", "dumpsys", "package", ORIGINAL_PACKAGE))
-    adb("install", "--no-incremental", "-r", str(OUT / "gboard-offline-coexist-experimental.apk"))
+    requested_abi = "arm64-v8a" if TEST_ARCH == "arm64" else "x86_64"
+    adb("install", "--no-incremental", "--abi", requested_abi, "-r", str(OUT / "gboard-offline-coexist-experimental.apk"))
     adb("install", "--no-incremental", "-r", "work/probe/probe.apk")
     adb("shell", "pm", "grant", "art.jonah.offlineprobe", "android.permission.RECORD_AUDIO")
     adb("shell", "settings", "put", "secure", "enabled_accessibility_services", "art.jonah.offlineprobe/.ProbeAccessibilityService")
@@ -231,6 +234,12 @@ def main():
     screenshot("typed.png")
     dump = adb("shell", "dumpsys", "package", PACKAGE)
     (OUT / "package.txt").write_text(dump)
+    primary_abi = re.search(r"primaryCpuAbi=(\S+)", dump)
+    if primary_abi is None or primary_abi[1] != requested_abi:
+        raise RuntimeError("Installed APK did not select the requested native ABI")
+    cloud_backup_allowed = any("ALLOW_BACKUP" in line for line in dump.splitlines() if "pkgFlags=" in line)
+    if cloud_backup_allowed:
+        raise RuntimeError("Installed Gboard still allows cloud backup")
     # A permission declaration and a runtime grant are distinct checks.
     direct_granted = "android.permission.INTERNET: granted=true" in dump
     if direct_granted:
@@ -257,6 +266,10 @@ def main():
     isolated_network = network_control()
     offline_voice = dictation_attempt()
     report = {
+        "tested_apk_arch": TEST_ARCH, "installed_primary_cpu_abi": primary_abi[1],
+        "emulator_supported_abis": adb("shell", "getprop", "ro.product.cpu.abilist").strip(),
+        "native_bridge": adb("shell", "getprop", "ro.dalvik.vm.native.bridge").strip(),
+        "cloud_backup_allowed": cloud_backup_allowed,
         "keyboard_taps": typed, "actual_typed": actual_typed,
         "keyboard_typing_passed": keyboard_passed,
         "gboard_direct_internet_granted": direct_granted,
@@ -300,6 +313,14 @@ def main():
 
 
 if __name__ == "__main__":
+    supported_abis = adb("shell", "getprop", "ro.product.cpu.abilist").strip().split(",")
+    requested_arch = os.environ.get("GBOARD_TEST_ARCH", "auto")
+    TEST_ARCH = ("arm64" if "arm64-v8a" in supported_abis else "x86_64") if requested_arch == "auto" else requested_arch
+    if TEST_ARCH not in ("arm64", "x86_64"):
+        raise RuntimeError("Unsupported test architecture")
+    OUT = Path("dist") / TEST_ARCH
+    (OUT / "device-properties.txt").write_text(adb("shell", "getprop"))
+    print("Runtime APK architecture:", TEST_ARCH, "guest ABI support:", supported_abis, flush=True)
     probe_log = (OUT / "probe-logcat.txt").open("w")
     probe_capture = subprocess.Popen(["adb", "logcat", "-v", "threadtime", "OfflineProbe:V", "OfflineModels:V", "AudioRecord:V", "ActivityTaskManager:I", "*:S"], stdout=probe_log, stderr=subprocess.STDOUT)
     try:

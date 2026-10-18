@@ -115,19 +115,19 @@ jobs:
         with:
           name: runtime-evidence-api${{ matrix.api }}
           path: |
-            dist/x86_64/*.json
-            dist/x86_64/*.txt
-            dist/x86_64/*.xml
-            dist/x86_64/*.png
-            dist/x86_64/*.pcm
-            dist/x86_64/*.wav
+            dist/*/*.json
+            dist/*/*.txt
+            dist/*/*.xml
+            dist/*/*.png
+            dist/*/*.pcm
+            dist/*/*.wav
           retention-days: 7
       - name: Summarize evidence
         if: always()
         run: |
           python3 - <<'PY'
           import json, os, pathlib
-          p = pathlib.Path('dist/x86_64/runtime-report.json')
+          p = next((p for p in pathlib.Path('dist').glob('*/runtime-report.json')), pathlib.Path('dist/x86_64/runtime-report.json'))
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
               f.write('## Experimental Gboard permission patch\n\n')
               f.write('**Read offline_dictation_passed below. A successful build/keyboard check is not a speech-recognition pass or a phone privacy guarantee.**\n\n')
