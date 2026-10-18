@@ -2,6 +2,7 @@
 """Exercise the real keyboard UI; report speech service prerequisites honestly."""
 import json
 import hashlib
+import array
 import os
 import re
 import subprocess
@@ -147,11 +148,25 @@ def exercise_keyboard(prefix=""):
 
 def prepare_speech_loop():
     with wave.open("work/hello-world.wav", "rb") as source:
-        parameters = source.getparams()
-        samples = source.readframes(source.getnframes())
+        if source.getnchannels() != 1 or source.getsampwidth() != 2:
+            raise RuntimeError("Expected a mono 16-bit speech fixture")
+        rate = source.getframerate()
+        original = array.array("h", source.readframes(source.getnframes()))
+    # Feed the microphone at the recognizer's native sample rate. Avoid the
+    # emulator's additional real-time resampler during transport diagnostics.
+    normalized = array.array("h")
+    for index in range(int((len(original) - 1) * 16000 / rate)):
+        position = index * rate / 16000
+        left = int(position)
+        fraction = position - left
+        normalized.append(round(original[left] * (1 - fraction) + original[left + 1] * fraction))
+    samples = normalized.tobytes()
+    with wave.open("work/hello-world-16k.wav", "wb") as output:
+        output.setparams((1, 2, 16000, 0, "NONE", "not compressed"))
+        output.writeframes(samples)
     with wave.open("work/speech-loop.wav", "wb") as output:
-        output.setparams(parameters)
-        gap = bytes(int(parameters.framerate * 0.25) * parameters.nchannels * parameters.sampwidth)
+        output.setparams((1, 2, 16000, 0, "NONE", "not compressed"))
+        gap = bytes(4000 * 2)
         output.writeframes((samples + gap) * 8)
 
 
@@ -162,7 +177,7 @@ def capture_microphone_control(prefix=""):
     start_probe("--ez", "record_audio", "true", "--ez", "check_network", "true")
     time.sleep(2)
     for _ in range(2):
-        player = play_audio("work/hello-world.wav")
+        player = play_audio("work/hello-world-16k.wav")
         if player.wait(timeout=40):
             raise RuntimeError("Microphone control playback failed")
         time.sleep(0.5)
