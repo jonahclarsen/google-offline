@@ -106,7 +106,10 @@ jobs:
           ram-size: 4096M
           cores: 4
           disable-animations: true
-          emulator-options: -gpu software -no-snapshot -no-boot-anim -camera-back none -writable-system -grpc-use-token
+          # Port was selected once using secrets.randbelow for the native
+          # fixture; keep it stable across subsequent runs. Token auth forces
+          # loopback binding. The explicit port also starts gRPC on Linux.
+          emulator-options: -gpu software -no-snapshot -no-boot-anim -camera-back none -writable-system -grpc 63589 -grpc-use-token
           pre-emulator-launch-script: |
             pactl info
             ls -l /tmp/gboard-offline-pulse.sock /usr/lib/x86_64-linux-gnu/libpulse.so
