@@ -8,19 +8,21 @@ Reproducible experimental APK patch and emulator evidence using free standard Gi
 
 1. Downloads pinned ARM64 and x86-64 Gboard 17.3.3 standalone APKs from APKMirror. These are May 2026 releases selected because both architectures have complete APKs. Downloading uses the normal page flow with a pinned browser-compatible HTTP client; downloaded content must still pass Google's signature check.
 2. Verifies each file's SHA-256 and Android APK signature against Google's certificate (`f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83`). A compromised mirror cannot substitute an unsigned or differently signed APK without failing this check.
-3. Removes the INTERNET declaration directly from binary Android XML. Keeps every other payload byte intact, including resources, DEX, and native libraries. Removes old signatures, aligns, and signs with an ephemeral test key.
+3. Produces an APK with only the INTERNET declaration removed from binary Android XML, plus the required signature changes. Every other app payload byte stays intact. Separately produces a coexistence variant named **Gboard Offline** (`com.google.android.inputmethod.local`): this changes package references in the manifest, DEX strings, and resource table; preserves DEX string ordering; and updates DEX checksums. Native libraries stay unchanged in both variants. Both are aligned and signed with an ephemeral test key.
 4. Verifies the resulting signature, alignment, permission list, and the absence of unexpected payload changes.
-5. Installs x86-64 Gboard on an Android 13 Google APIs emulator, selects it as the keyboard, taps actual keyboard keys, and checks the resulting text. Saves screenshots, package state, logs, and speech-service discovery.
+5. Tests the coexistence variant in Android 12 (API 31) and Android 17 (API 37) Google APIs emulators, selects it as the keyboard, taps actual keyboard keys, and checks the resulting text. Checks that stock Gboard remains installed in the same location. Saves screenshots, package state, logs, and speech-service discovery. These are Android platform checks, not Samsung One UI hardware tests.
 
 ARM64 receives static verification only. The x86-64 emulator result does not establish ARM64 compatibility on your phone. No recognition result is assumed from speech-service availability or from tapping a microphone.
 
 ## Downloads and installation limitations
 
-Open the latest workflow run and download `experimental-gboard-and-evidence`. Files under `arm64/` are intended for ARM64 devices. Keep another working keyboard installed before experimenting. The package name remains Google's original, but the signing key differs: this APK cannot update official Gboard or replace a factory-installed copy through ordinary installation. Each workflow uses a new signing key, so its artifacts cannot update each other either. No signing keys or upstream APKs are stored in git.
+Open the latest workflow run and download an `experimental-gboard-and-evidence-api…` artifact. Files under `arm64/` are intended for the Galaxy S10 and S25. The **coexist** APK uses a separate package name and keyboard label so it can be installed alongside official Gboard; the other APK retains Google's package name and cannot update an official installation because the signing key differs. Keep a working keyboard installed before experimenting. Each job uses a new signing key, so separate builds cannot update each other. No signing keys or upstream APKs are stored in git.
+
+The user's targets are English dictation on a Galaxy S10 with its last official Android release and on a future Galaxy S25 with the latest supported release. The initial platform test matrix is Android 12 and Android 17; actual installed versions and One UI behavior still require device verification.
 
 ## What must pass before calling this finished
 
-- Identify the user's phone, Android version, and dictation language.
+- Confirm the exact installed Android/One UI versions on the user's S10 and S25; English is the requested dictation language.
 - Obtain and verify a suitable current Gboard APK and any speech-service APKs needed for that device.
 - Load the offline language models, then isolate **all** involved components from the network.
 - Feed a known audio sample through Gboard's microphone flow and assert the actual recognized text, with networking available to the rest of the device.

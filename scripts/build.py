@@ -10,6 +10,7 @@ import urllib.request
 import zipfile
 from pathlib import Path
 from patch_manifest import patch_apk
+from clone_apk import CLONE_PACKAGE, clone
 
 GOOGLE_CERT = "f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83"
 
@@ -73,6 +74,18 @@ def build(arch):
     report = {"source": source, "original_sha256": original_hash, "original_google_signature_verified": True, "original_certificate_sha256": GOOGLE_CERT, "original_package": before.splitlines()[0], "patched_package": after.splitlines()[0], "removed_internet_declarations": removed, "changed_payload_files": changed, "patched_sha256": hashlib.sha256(output.read_bytes()).hexdigest(), "patched_signature": output_signature, "keyboard_runtime": "not tested", "offline_dictation": "NOT VERIFIED", "privacy_scope": "Removes direct INTERNET permission from Gboard only. External speech services retain their own permissions.", "signing": "Ephemeral experimental key; builds cannot update each other."}
     (dist / "build-report.json").write_text(json.dumps(report, indent=2) + "\n")
     (dist / "permissions.txt").write_text(permissions)
+    cloned_unsigned, cloned_aligned = work / "clone-unsigned.apk", work / "clone-aligned.apk"
+    clone_changes = clone(output, cloned_unsigned)
+    run(tools / "zipalign", "-P", "16", "-f", "4", cloned_unsigned, cloned_aligned)
+    cloned_output = dist / "gboard-offline-coexist-experimental.apk"
+    run(tools / "apksigner", "sign", "--ks", key, "--ks-pass", "pass:android", "--out", cloned_output, cloned_aligned)
+    run(tools / "apksigner", "verify", "--verbose", cloned_output)
+    run(tools / "zipalign", "-c", "-P", "16", "4", cloned_output)
+    cloned_badging = run(tools / "aapt2", "dump", "badging", cloned_output)
+    cloned_permissions = run(tools / "aapt2", "dump", "permissions", cloned_output)
+    if f"package: name='{CLONE_PACKAGE}'" not in cloned_badging or "application-label:'Gboard Offline'" not in cloned_badging or "android.permission.INTERNET" in cloned_permissions:
+        raise RuntimeError("Clone package, label, or permission verification failed")
+    (dist / "clone-report.json").write_text(json.dumps({"package": CLONE_PACKAGE, "label": "Gboard Offline", "changed_files_beyond_permission_patch": clone_changes, "sha256": hashlib.sha256(cloned_output.read_bytes()).hexdigest(), "offline_dictation": "NOT VERIFIED", "runtime": "not tested"}, indent=2) + "\n")
     print(json.dumps(report, indent=2))
 
 

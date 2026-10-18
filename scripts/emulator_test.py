@@ -7,7 +7,8 @@ import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-PACKAGE = "com.google.android.inputmethod.latin"
+PACKAGE = "com.google.android.inputmethod.local"
+ORIGINAL_PACKAGE = "com.google.android.inputmethod.latin"
 OUT = Path("dist/x86_64")
 
 
@@ -37,9 +38,10 @@ def screenshot(name):
 def main():
     adb("logcat", "-c")
     (OUT / "preinstalled-packages.txt").write_text(adb("shell", "pm", "list", "packages", "-f"))
-    (OUT / "preinstall-package.txt").write_text(adb("shell", "dumpsys", "package", PACKAGE))
-    adb("install", "-r", str(OUT / "gboard-no-internet-experimental.apk"))
-    adb("install", "-r", "work/probe/probe.apk")
+    original_before = adb("shell", "pm", "path", ORIGINAL_PACKAGE)
+    (OUT / "preinstall-package.txt").write_text(adb("shell", "dumpsys", "package", ORIGINAL_PACKAGE))
+    adb("install", "--no-incremental", "-r", str(OUT / "gboard-offline-coexist-experimental.apk"))
+    adb("install", "--no-incremental", "-r", "work/probe/probe.apk")
     services = adb("shell", "ime", "list", "-s").splitlines()
     ime = next(s.strip() for s in services if s.startswith(PACKAGE + "/"))
     adb("shell", "ime", "enable", ime)
@@ -89,6 +91,7 @@ def main():
     report = {
         "keyboard_taps": typed, "input_values": input_values, "keyboard_typing_passed": keyboard_passed,
         "gboard_direct_internet_granted": direct_granted, "voice_button_found": mic is not None,
+        "stock_gboard_unchanged": bool(original_before.strip()) and original_before == adb("shell", "pm", "path", ORIGINAL_PACKAGE),
         "speech": speech, "offline_dictation_passed": False,
         "offline_dictation_status": "NOT VERIFIED: requires a real audio-to-text result with all relevant speech components network-isolated",
     }
