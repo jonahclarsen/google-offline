@@ -34,7 +34,8 @@ def play_audio(path):
 
 
 def adb(*args, check=True):
-    result = subprocess.run(["adb", *args], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    timeout = 60 if args and args[0] in ("install", "wait-for-device") else 20
+    result = subprocess.run(["adb", *args], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout)
     if check and result.returncode:
         print(result.stdout, flush=True)
         result.check_returncode()
