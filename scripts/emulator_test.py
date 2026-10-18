@@ -105,13 +105,20 @@ def main():
     adb("shell", "ip6tables", "-I", "OUTPUT", "1", "-j", "DROP")
     (OUT / "network-isolation.txt").write_text(adb("shell", "iptables", "-S", "OUTPUT") + adb("shell", "ip6tables", "-S", "OUTPUT"))
     adb("emu", "avd", "hostmicon")
-    if mic is not None:
-        tap(mic)
-        time.sleep(3)
-        for _ in range(3):
-            subprocess.run(["paplay", "--device=speech_input", "work/hello-world.wav"], check=True)
-            time.sleep(2)
-        time.sleep(5)
+    pid = adb("shell", "pidof", "-s", PACKAGE).strip()
+    with (OUT / "gboard-voice-logcat.txt").open("w") as voice_log:
+        capture = subprocess.Popen(["adb", "logcat", "--pid", pid, "-v", "threadtime"], stdout=voice_log, stderr=subprocess.STDOUT)
+        try:
+            if mic is not None:
+                tap(mic)
+                time.sleep(3)
+                for _ in range(3):
+                    subprocess.run(["paplay", "--device=speech_input", "work/hello-world.wav"], check=True)
+                    time.sleep(2)
+                time.sleep(5)
+        finally:
+            capture.terminate()
+            capture.wait(timeout=5)
     screenshot("voice-attempt.png")
     voice_tree = ui()
     (OUT / "voice-ui.xml").write_text(ET.tostring(voice_tree, encoding="unicode"))
@@ -121,6 +128,7 @@ def main():
     report = {
         "keyboard_taps": typed, "input_values": input_values, "keyboard_typing_passed": keyboard_passed,
         "gboard_direct_internet_granted": direct_granted, "voice_button_found": mic is not None,
+        "voice_button": mic.attrib if mic is not None else None,
         "stock_gboard_unchanged": bool(original_before.strip()) and original_before == adb("shell", "pm", "path", ORIGINAL_PACKAGE),
         "speech": speech, "input_values_after_speech": after_speech, "expected_speech": "hello world",
         "offline_dictation_passed": speech_passed,
