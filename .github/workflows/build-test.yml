@@ -15,6 +15,9 @@ jobs:
     timeout-minutes: 35
     env:
       QEMU_AUDIO_DRV: pa
+      # Native ARM64 evidence is recorded separately on an ARM host. Keep
+      # hosted platform checks on the runner's own architecture.
+      GBOARD_TEST_ARCH: x86_64
       GBOARD_AUDIO_TRANSPORT: ${{ matrix.api == '31' && 'grpc' || 'pulse' }}
       GBOARD_SIGNING_PASSWORD: ${{ secrets.GBOARD_SIGNING_PASSWORD }}
     steps:
@@ -109,7 +112,7 @@ jobs:
           # Port was selected once using secrets.randbelow for the native
           # fixture; keep it stable across subsequent runs. Token auth forces
           # loopback binding. The explicit port also starts gRPC on Linux.
-          emulator-options: -gpu software -no-snapshot -no-boot-anim -camera-back none -writable-system -grpc 63589 -grpc-use-token
+          emulator-options: -gpu software -no-snapshot -no-boot-anim -camera-back none -grpc 63589 -grpc-use-token
           pre-emulator-launch-script: |
             pactl info
             ls -l /tmp/gboard-offline-pulse.sock /usr/lib/x86_64-linux-gnu/libpulse.so
