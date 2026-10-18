@@ -62,7 +62,7 @@ def build(arch):
         raise RuntimeError("Patched APK still requests INTERNET")
     with zipfile.ZipFile(original) as src, zipfile.ZipFile(output) as dst:
         changed = [n for n in dst.namelist() if not n.startswith("META-INF/") and (n not in src.namelist() or src.read(n) != dst.read(n))]
-        missing = [n for n in src.namelist() if not n.startswith("META-INF/") and n not in dst.namelist()]
+        missing = [n for n in src.namelist() if not n.startswith("META-INF/") and n != "stamp-cert-sha256" and n not in dst.namelist()]
     if changed != ["AndroidManifest.xml"] or missing:
         raise RuntimeError(f"Unexpected payload changes: {changed}, missing: {missing}")
     report = {"source": source, "original_sha256": original_hash, "original_google_signature_verified": True, "original_certificate_sha256": GOOGLE_CERT, "original_package": before.splitlines()[0], "patched_package": after.splitlines()[0], "removed_internet_declarations": removed, "changed_payload_files": changed, "patched_sha256": hashlib.sha256(output.read_bytes()).hexdigest(), "patched_signature": output_signature, "keyboard_runtime": "not tested", "offline_dictation": "NOT VERIFIED", "privacy_scope": "Removes direct INTERNET permission from Gboard only. External speech services retain their own permissions.", "signing": "Ephemeral experimental key; builds cannot update each other."}
