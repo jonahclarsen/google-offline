@@ -65,6 +65,18 @@ def main():
     adb("shell", "pm", "grant", PACKAGE, "android.permission.RECORD_AUDIO", check=False)
     adb("shell", "am", "start", "-n", "art.jonah.offlineprobe/.ProbeActivity")
     time.sleep(8)
+    # A fresh API 37 image may show a launcher ANR during first boot. Only
+    # close that known unrelated process; Gboard/probe failures remain visible.
+    for _ in range(3):
+        tree = ui()
+        launcher_anr = any("Pixel Launcher isn't responding" in n.attrib.get("text", "") for n in tree.iter("node"))
+        close = next((n for n in tree.iter("node") if n.attrib.get("package") == "android" and n.attrib.get("text", "").lower() == "close app"), None)
+        if not launcher_anr or close is None:
+            break
+        screenshot("launcher-anr.png")
+        tap(close)
+        adb("shell", "am", "start", "-n", "art.jonah.offlineprobe/.ProbeActivity")
+        time.sleep(5)
     # Dismiss first-run dialogs only when their labels are understood.
     for _ in range(3):
         tree = ui()
