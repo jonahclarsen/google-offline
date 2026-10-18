@@ -120,6 +120,7 @@ jobs:
             dist/x86_64/*.xml
             dist/x86_64/*.png
             dist/x86_64/*.pcm
+            dist/x86_64/*.wav
           retention-days: 7
       - name: Summarize evidence
         if: always()

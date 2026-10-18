@@ -49,6 +49,8 @@ def screenshot(name):
 
 def main():
     adb("logcat", "-c")
+    import shutil
+    shutil.copyfile("work/hello-world.wav", OUT / "source-speech.wav")
     (OUT / "preinstalled-packages.txt").write_text(adb("shell", "pm", "list", "packages", "-f"))
     original_before = adb("shell", "pm", "path", ORIGINAL_PACKAGE)
     (OUT / "preinstall-package.txt").write_text(adb("shell", "dumpsys", "package", ORIGINAL_PACKAGE))
@@ -168,7 +170,7 @@ def main():
 
 if __name__ == "__main__":
     probe_log = (OUT / "probe-logcat.txt").open("w")
-    probe_capture = subprocess.Popen(["adb", "logcat", "-v", "threadtime", "OfflineProbe:V", "AudioRecord:V", "ActivityTaskManager:I", "*:S"], stdout=probe_log, stderr=subprocess.STDOUT)
+    probe_capture = subprocess.Popen(["adb", "logcat", "-v", "threadtime", "OfflineProbe:V", "OfflineModels:V", "AudioRecord:V", "ActivityTaskManager:I", "*:S"], stdout=probe_log, stderr=subprocess.STDOUT)
     try:
         main()
     finally:
