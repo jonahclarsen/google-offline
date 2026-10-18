@@ -11,10 +11,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api: [31, 37]
+        api: ['31', '37.0']
     timeout-minutes: 35
     env:
       QEMU_AUDIO_DRV: pa
+      GBOARD_SIGNING_PASSWORD: ${{ secrets.GBOARD_SIGNING_PASSWORD }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - name: Test binary manifest patch boundaries
@@ -22,15 +23,28 @@ jobs:
       - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
       - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
         with:
           packages: platform-tools
           log-accepted-android-sdk-licenses: false
+          cmdline-tools-version: '14742923'
       - name: Install Android build tools
         run: sdkmanager 'build-tools;35.0.0' 'platforms;android-35'
       - name: Install pinned APK download client
         run: python3 -m pip install -r requirements-build.txt
+      - name: Load persistent APK signing key
+        env:
+          GBOARD_SIGNING_KEYSTORE: ${{ secrets.GBOARD_SIGNING_KEYSTORE }}
+        run: |
+          python3 - <<'PY'
+          import base64, os, pathlib
+          p = pathlib.Path('work/signing/gboard-offline.p12')
+          p.parent.mkdir(parents=True, exist_ok=True)
+          fd = os.open(p, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+          with os.fdopen(fd, 'wb') as f:
+              f.write(base64.b64decode(os.environ['GBOARD_SIGNING_KEYSTORE'], validate=True))
+          PY
       - name: Verify Google signatures and patch APKs
         run: |
           python3 scripts/build.py arm64

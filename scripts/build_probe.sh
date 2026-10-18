@@ -12,4 +12,8 @@ with zipfile.ZipFile('work/probe/unsigned.apk', 'a') as apk:
     apk.write('work/probe/dex/classes.dex', 'classes.dex')
 PY
 "$tools/zipalign" -f 4 work/probe/unsigned.apk work/probe/aligned.apk
-"$tools/apksigner" sign --ks work/x86_64/test-signing.jks --ks-pass pass:android --out work/probe/probe.apk work/probe/aligned.apk
+if [[ -f work/signing/gboard-offline.p12 ]]; then
+  "$tools/apksigner" sign --ks work/signing/gboard-offline.p12 --ks-pass env:GBOARD_SIGNING_PASSWORD --out work/probe/probe.apk work/probe/aligned.apk
+else
+  "$tools/apksigner" sign --ks work/x86_64/test-signing.jks --ks-pass pass:android --out work/probe/probe.apk work/probe/aligned.apk
+fi
