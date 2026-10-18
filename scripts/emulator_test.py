@@ -12,7 +12,10 @@ OUT = Path("dist/x86_64")
 
 
 def adb(*args, check=True):
-    result = subprocess.run(["adb", *args], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=check)
+    result = subprocess.run(["adb", *args], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    if check and result.returncode:
+        print(result.stdout, flush=True)
+        result.check_returncode()
     return result.stdout
 
 
@@ -33,6 +36,8 @@ def screenshot(name):
 
 def main():
     adb("logcat", "-c")
+    (OUT / "preinstalled-packages.txt").write_text(adb("shell", "pm", "list", "packages", "-f"))
+    (OUT / "preinstall-package.txt").write_text(adb("shell", "dumpsys", "package", PACKAGE))
     adb("install", "-r", str(OUT / "gboard-no-internet-experimental.apk"))
     adb("install", "-r", "work/probe/probe.apk")
     services = adb("shell", "ime", "list", "-s").splitlines()
@@ -94,4 +99,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    finally:
+        (OUT / "logcat.txt").write_text(adb("logcat", "-d", "-t", "2500", check=False))
+        screenshot("last-state.png")
