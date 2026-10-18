@@ -119,7 +119,7 @@ def main():
     adb("shell", "ip6tables", "-I", "OUTPUT", "1", "-j", "DROP")
     (OUT / "network-isolation.txt").write_text(adb("shell", "iptables", "-S", "OUTPUT") + adb("shell", "ip6tables", "-S", "OUTPUT"))
     adb("emu", "avd", "hostmicon")
-    adb("shell", "am", "start", "-n", "art.jonah.offlineprobe/.ProbeActivity", "--ez", "record_audio", "true")
+    adb("shell", "am", "start", "--activity-clear-task", "--activity-new-task", "-n", "art.jonah.offlineprobe/.ProbeActivity", "--ez", "record_audio", "true")
     time.sleep(2)
     for _ in range(2):
         subprocess.run(["paplay", "--device=speech_input", "work/hello-world.wav"], check=True)
