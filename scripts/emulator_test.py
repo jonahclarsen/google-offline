@@ -160,7 +160,13 @@ def main():
     voice_tree = ui()
     (OUT / "voice-ui.xml").write_text(ET.tostring(voice_tree, encoding="unicode"))
     after_speech = [n.attrib.get("text", "") for n in voice_tree.iter("node") if n.attrib.get("class") == "android.widget.EditText"]
-    speech_passed = microphone_control["passed"] and mic is not None and any("hello world" in re.sub(r"[^a-z ]", "", value.lower()) for value in after_speech)
+    voice_log_text = (OUT / "gboard-voice-logcat.txt").read_text()
+    local_engine_confirmed = "Using Fallback on-device recognizer." in voice_log_text or "Using the OnDevice recognizer." in voice_log_text
+    network_recognizer_started = "Online recognizer - start listening" in voice_log_text
+    crash_log = adb("logcat", "-d", "-b", "crash")
+    (OUT / "crashes.txt").write_text(crash_log)
+    crash_free = f"Process: {PACKAGE}, PID:" not in crash_log
+    speech_passed = crash_free and local_engine_confirmed and not network_recognizer_started and microphone_control["passed"] and mic is not None and any("hello world" in re.sub(r"[^a-z ]", "", value.lower()) for value in after_speech)
     (OUT / "logcat.txt").write_text(adb("logcat", "-d", "-t", "2500"))
     report = {
         "keyboard_taps": typed, "input_values": input_values, "keyboard_typing_passed": keyboard_passed,
@@ -168,15 +174,19 @@ def main():
         "voice_button": mic.attrib if mic is not None else None,
         "stock_gboard_unchanged": bool(original_before.strip()) and original_before == adb("shell", "pm", "path", ORIGINAL_PACKAGE),
         "speech": speech, "input_values_after_speech": after_speech, "expected_speech": "hello world",
-        "microphone_control": microphone_control,
+        "microphone_control": microphone_control, "local_engine_confirmed": local_engine_confirmed, "network_recognizer_started": network_recognizer_started, "gboard_crash_free": crash_free,
         "offline_dictation_passed": speech_passed,
         "offline_dictation_status": "PASS: synthetic speech produced expected text with all emulator IPv4/IPv6 egress blocked" if speech_passed else "NOT VERIFIED: expected offline transcript not obtained; inspect voice screenshot and logs",
         "isolation_scope": "All emulator guest egress blocked via root iptables/ip6tables. No equivalent phone firewall is included.",
     }
     (OUT / "runtime-report.json").write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report, indent=2))
+    if not crash_free:
+        raise RuntimeError("Gboard crashed during the test; inspect crashes.txt")
     if not keyboard_passed:
         raise RuntimeError("Actual Gboard key taps did not produce qwe in the test field; inspect screenshots")
+    if not speech_passed:
+        raise RuntimeError("Offline dictation has not passed; inspect runtime-report.json and voice logs")
 
 
 if __name__ == "__main__":
