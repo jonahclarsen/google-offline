@@ -112,7 +112,8 @@ def main():
     time.sleep(1)
     tree = ui()
     input_values = [n.attrib.get("text", "") for n in tree.iter("node") if n.attrib.get("class") == "android.widget.EditText"]
-    keyboard_passed = typed == list("qwe") and "qwe" in input_values
+    actual_typed = adb("shell", "cat", "/sdcard/Android/data/art.jonah.offlineprobe/files/input.txt").strip()
+    keyboard_passed = typed == list("qwe") and actual_typed == "qwe"
     screenshot("typed.png")
     dump = adb("shell", "dumpsys", "package", PACKAGE)
     (OUT / "package.txt").write_text(dump)
@@ -148,10 +149,10 @@ def main():
         try:
             if mic is not None:
                 tap(mic)
-                time.sleep(3)
-                for _ in range(3):
+                time.sleep(0.5)
+                for _ in range(4):
                     subprocess.run(["paplay", "--device=speech_input", "work/hello-world.wav"], check=True)
-                    time.sleep(2)
+                    time.sleep(0.3)
                 time.sleep(5)
         finally:
             capture.terminate()
@@ -160,16 +161,17 @@ def main():
     voice_tree = ui()
     (OUT / "voice-ui.xml").write_text(ET.tostring(voice_tree, encoding="unicode"))
     after_speech = [n.attrib.get("text", "") for n in voice_tree.iter("node") if n.attrib.get("class") == "android.widget.EditText"]
+    actual_dictated = adb("shell", "cat", "/sdcard/Android/data/art.jonah.offlineprobe/files/input.txt").strip()
     voice_log_text = (OUT / "gboard-voice-logcat.txt").read_text()
     local_engine_confirmed = "Using Fallback on-device recognizer." in voice_log_text or "Using the OnDevice recognizer." in voice_log_text
     network_recognizer_started = "Online recognizer - start listening" in voice_log_text
     crash_log = adb("logcat", "-d", "-b", "crash")
     (OUT / "crashes.txt").write_text(crash_log)
     crash_free = f"Process: {PACKAGE}, PID:" not in crash_log
-    speech_passed = crash_free and local_engine_confirmed and not network_recognizer_started and microphone_control["passed"] and mic is not None and any("hello world" in re.sub(r"[^a-z ]", "", value.lower()) for value in after_speech)
+    speech_passed = crash_free and local_engine_confirmed and not network_recognizer_started and microphone_control["passed"] and mic is not None and any("hello world" in re.sub(r"[^a-z ]", "", value.lower()) for value in [actual_dictated])
     (OUT / "logcat.txt").write_text(adb("logcat", "-d", "-t", "2500"))
     report = {
-        "keyboard_taps": typed, "input_values": input_values, "keyboard_typing_passed": keyboard_passed,
+        "keyboard_taps": typed, "actual_typed": actual_typed, "actual_dictated": actual_dictated, "input_values": input_values, "keyboard_typing_passed": keyboard_passed,
         "gboard_direct_internet_granted": direct_granted, "voice_button_found": mic is not None,
         "voice_button": mic.attrib if mic is not None else None,
         "stock_gboard_unchanged": bool(original_before.strip()) and original_before == adb("shell", "pm", "path", ORIGINAL_PACKAGE),

@@ -22,7 +22,13 @@ public class ProbeActivity extends Activity {
         input.setHint("Offline Gboard test");
         input.setTextSize(24);
         input.setGravity(android.view.Gravity.TOP);
+        input.addTextChangedListener(new android.text.TextWatcher() {
+            public void beforeTextChanged(CharSequence value, int start, int count, int after) {}
+            public void onTextChanged(CharSequence value, int start, int before, int count) {}
+            public void afterTextChanged(android.text.Editable value) { saveText(value.toString()); }
+        });
         setContentView(input);
+        saveText("");
         input.requestFocus();
         input.postDelayed(() -> ((InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE)).showSoftInput(input, InputMethodManager.SHOW_IMPLICIT), 1000);
         if (getIntent().getBooleanExtra("record_audio", false)) {
@@ -46,6 +52,14 @@ public class ProbeActivity extends Activity {
                 writer.write(report.toString(2));
             }
         } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
+    private void saveText(String text) {
+        try {
+            File temporary = new File(getExternalFilesDir(null), "input.tmp");
+            try (FileWriter writer = new FileWriter(temporary)) { writer.write(text); }
+            temporary.renameTo(new File(getExternalFilesDir(null), "input.txt"));
+        } catch (Exception error) { android.util.Log.e("OfflineProbe", "Cannot save actual editor text", error); }
     }
 
     private void recordControl() {
