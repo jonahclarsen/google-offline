@@ -25,6 +25,9 @@ public class ProbeActivity extends Activity {
         setContentView(input);
         input.requestFocus();
         input.postDelayed(() -> ((InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE)).showSoftInput(input, InputMethodManager.SHOW_IMPLICIT), 1000);
+        if (getIntent().getBooleanExtra("record_audio", false)) {
+            input.postDelayed(() -> new Thread(this::recordControl).start(), 500);
+        }
         try {
             JSONObject report = new JSONObject();
             report.put("speech_recognizer_available", SpeechRecognizer.isRecognitionAvailable(this));
@@ -43,5 +46,27 @@ public class ProbeActivity extends Activity {
                 writer.write(report.toString(2));
             }
         } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
+    private void recordControl() {
+        android.media.AudioRecord recorder = null;
+        try {
+            int buffer = Math.max(4096, android.media.AudioRecord.getMinBufferSize(16000, android.media.AudioFormat.CHANNEL_IN_MONO, android.media.AudioFormat.ENCODING_PCM_16BIT));
+            recorder = new android.media.AudioRecord(android.media.MediaRecorder.AudioSource.VOICE_RECOGNITION, 16000, android.media.AudioFormat.CHANNEL_IN_MONO, android.media.AudioFormat.ENCODING_PCM_16BIT, buffer);
+            recorder.startRecording();
+            long end = android.os.SystemClock.uptimeMillis() + 7000;
+            byte[] samples = new byte[buffer];
+            try (java.io.FileOutputStream output = new java.io.FileOutputStream(new File(getExternalFilesDir(null), "microphone-control.pcm"))) {
+                while (android.os.SystemClock.uptimeMillis() < end) {
+                    int count = recorder.read(samples, 0, samples.length);
+                    if (count < 0) throw new IllegalStateException("AudioRecord error " + count);
+                    output.write(samples, 0, count);
+                }
+            }
+        } catch (Exception e) {
+            android.util.Log.e("OfflineProbe", "Microphone control failed", e);
+        } finally {
+            if (recorder != null) { recorder.stop(); recorder.release(); }
+        }
     }
 }

@@ -6,6 +6,7 @@ import subprocess
 import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from audio_control import verify_capture
 
 PACKAGE = "com.google.android.inputmethod.local"
 ORIGINAL_PACKAGE = "com.google.android.inputmethod.latin"
@@ -53,6 +54,7 @@ def main():
     (OUT / "preinstall-package.txt").write_text(adb("shell", "dumpsys", "package", ORIGINAL_PACKAGE))
     adb("install", "--no-incremental", "-r", str(OUT / "gboard-offline-coexist-experimental.apk"))
     adb("install", "--no-incremental", "-r", "work/probe/probe.apk")
+    adb("shell", "pm", "grant", "art.jonah.offlineprobe", "android.permission.RECORD_AUDIO")
     adb("shell", "settings", "put", "secure", "enabled_accessibility_services", "art.jonah.offlineprobe/.ProbeAccessibilityService")
     adb("shell", "settings", "put", "secure", "accessibility_enabled", "1")
     services = [line.strip() for line in adb("shell", "ime", "list", "-a", "-s").splitlines()]
@@ -105,6 +107,16 @@ def main():
     adb("shell", "ip6tables", "-I", "OUTPUT", "1", "-j", "DROP")
     (OUT / "network-isolation.txt").write_text(adb("shell", "iptables", "-S", "OUTPUT") + adb("shell", "ip6tables", "-S", "OUTPUT"))
     adb("emu", "avd", "hostmicon")
+    adb("shell", "am", "start", "-n", "art.jonah.offlineprobe/.ProbeActivity", "--ez", "record_audio", "true")
+    time.sleep(2)
+    for _ in range(2):
+        subprocess.run(["paplay", "--device=speech_input", "work/hello-world.wav"], check=True)
+        time.sleep(0.5)
+    time.sleep(4)
+    adb("pull", "/sdcard/Android/data/art.jonah.offlineprobe/files/microphone-control.pcm", str(OUT / "microphone-control.pcm"))
+    microphone_control = verify_capture(OUT / "microphone-control.pcm", "work/hello-world.wav")
+    tree = ui()
+    mic = next((n for n in tree.iter("node") if n.attrib.get("package") == PACKAGE and any(word in n.attrib.get("content-desc", "").lower() for word in ("voice", "microphone", "dictat"))), None)
     pid = adb("shell", "pidof", "-s", PACKAGE).strip()
     with (OUT / "gboard-voice-logcat.txt").open("w") as voice_log:
         capture = subprocess.Popen(["adb", "logcat", "--pid", pid, "-v", "threadtime"], stdout=voice_log, stderr=subprocess.STDOUT)
@@ -123,7 +135,7 @@ def main():
     voice_tree = ui()
     (OUT / "voice-ui.xml").write_text(ET.tostring(voice_tree, encoding="unicode"))
     after_speech = [n.attrib.get("text", "") for n in voice_tree.iter("node") if n.attrib.get("class") == "android.widget.EditText"]
-    speech_passed = mic is not None and any("hello world" in re.sub(r"[^a-z ]", "", value.lower()) for value in after_speech)
+    speech_passed = microphone_control["passed"] and mic is not None and any("hello world" in re.sub(r"[^a-z ]", "", value.lower()) for value in after_speech)
     (OUT / "logcat.txt").write_text(adb("logcat", "-d", "-t", "2500"))
     report = {
         "keyboard_taps": typed, "input_values": input_values, "keyboard_typing_passed": keyboard_passed,
@@ -131,6 +143,7 @@ def main():
         "voice_button": mic.attrib if mic is not None else None,
         "stock_gboard_unchanged": bool(original_before.strip()) and original_before == adb("shell", "pm", "path", ORIGINAL_PACKAGE),
         "speech": speech, "input_values_after_speech": after_speech, "expected_speech": "hello world",
+        "microphone_control": microphone_control,
         "offline_dictation_passed": speech_passed,
         "offline_dictation_status": "PASS: synthetic speech produced expected text with all emulator IPv4/IPv6 egress blocked" if speech_passed else "NOT VERIFIED: expected offline transcript not obtained; inspect voice screenshot and logs",
         "isolation_scope": "All emulator guest egress blocked via root iptables/ip6tables. No equivalent phone firewall is included.",
