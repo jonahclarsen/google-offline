@@ -54,8 +54,9 @@ def ui():
             return root
     except (ValueError, TypeError):
         pass
-    adb("shell", "uiautomator", "dump", "/sdcard/window.xml")
-    return ET.fromstring(adb("shell", "cat", "/sdcard/window.xml"))
+    # A temporary UiAutomation connection suppresses this accessibility
+    # service and can hide the IME. An empty helper snapshot means wait.
+    return root
 
 
 def tap(node):
@@ -293,6 +294,7 @@ def main():
     adb("shell", "pm", "grant", "art.jonah.offlineprobe", "android.permission.RECORD_AUDIO")
     adb("shell", "settings", "put", "secure", "enabled_accessibility_services", "art.jonah.offlineprobe/.ProbeAccessibilityService")
     adb("shell", "settings", "put", "secure", "accessibility_enabled", "1")
+    adb("shell", "settings", "put", "secure", "show_ime_with_hard_keyboard", "1")
     services = [line.strip() for line in adb("shell", "ime", "list", "-a", "-s").splitlines()]
     (OUT / "ime-services.txt").write_text("\n".join(services))
     ime = next(s for s in services if s.startswith(PACKAGE + "/"))
