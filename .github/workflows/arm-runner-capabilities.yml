@@ -1,0 +1,40 @@
+name: ARM runner capabilities (diagnostic only)
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  capabilities:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 5
+    steps:
+      - name: Check native virtualization and official emulator archives
+        run: |
+          if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
+          python3 - <<'PY'
+          import fcntl, json, os, platform, urllib.request, xml.etree.ElementTree as ET
+          result = {'host_machine': platform.machine(), 'kvm_device_exists': os.path.exists('/dev/kvm')}
+          try:
+              device = os.open('/dev/kvm', os.O_RDWR)
+              result['kvm_api_version'] = fcntl.ioctl(device, 0xae00, 0)
+              vm = fcntl.ioctl(device, 0xae01, 0)
+              result['can_create_vm'] = True
+              os.close(vm)
+              os.close(device)
+          except OSError as error:
+              result['can_create_vm'] = False
+              result['kvm_error'] = str(error)
+          with urllib.request.urlopen('https://dl.google.com/android/repository/repository2-3.xml', timeout=30) as response:
+              root = ET.fromstring(response.read())
+          for node in root.iter():
+              node.tag = node.tag.rsplit('}', 1)[-1]
+          archives = []
+          for package in root.findall('remotePackage'):
+              if package.get('path') == 'emulator':
+                  for archive in package.findall('./archives/archive'):
+                      if archive.findtext('host-os') == 'linux':
+                          archives.append({'host_arch': archive.findtext('host-arch'), 'url': archive.findtext('./complete/url')})
+          result['official_linux_emulator_archives'] = archives
+          print(json.dumps(result, indent=2))
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'w') as summary:
+              summary.write('This is a host capability probe, not an APK or dictation test.\n\n```json\n' + json.dumps(result, indent=2) + '\n```\n')
+          PY
