@@ -15,7 +15,7 @@ jobs:
     timeout-minutes: 35
     env:
       QEMU_AUDIO_DRV: pa
-      GBOARD_AUDIO_TRANSPORT: grpc
+      GBOARD_AUDIO_TRANSPORT: ${{ matrix.api == '31' && 'grpc' || 'pulse' }}
       GBOARD_SIGNING_PASSWORD: ${{ secrets.GBOARD_SIGNING_PASSWORD }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -86,7 +86,7 @@ jobs:
           pactl set-default-source speech_input.monitor
           pactl set-default-sink discard_output
           pactl load-module module-native-protocol-unix socket=/tmp/gboard-offline-pulse.sock auth-anonymous=1
-          printf '%s\n' 'PULSE_SERVER=unix:/tmp/gboard-offline-pulse.sock' 'QEMU_PA_SERVER=unix:/tmp/gboard-offline-pulse.sock' 'PULSE_SOURCE=speech_input.monitor' 'QEMU_PA_SOURCE=speech_input.monitor' 'QEMU_PA_SAMPLES=8192' 'PULSE_SINK=discard_output' 'QEMU_PA_SINK=discard_output' >> "$GITHUB_ENV"
+          printf '%s\n' 'PULSE_SERVER=unix:/tmp/gboard-offline-pulse.sock' 'QEMU_PA_SERVER=unix:/tmp/gboard-offline-pulse.sock' 'PULSE_SOURCE=speech_input.monitor' 'QEMU_PA_SOURCE=speech_input.monitor' 'QEMU_PA_SAMPLES=4096' 'PULSE_SINK=discard_output' 'QEMU_PA_SINK=discard_output' >> "$GITHUB_ENV"
           espeak-ng -v en-us -s 135 -w work/hello-world.wav 'hello world'
           Xvfb -displayfd 3 -screen 0 1080x1920x24 -nolisten tcp 3>work/xvfb-display >work/xvfb.log 2>&1 &
           for attempt in {1..50}; do
@@ -104,12 +104,12 @@ jobs:
           profile: pixel_2
           disk-size: 4G
           ram-size: 4096M
-          cores: 4
+          cores: 2
           disable-animations: true
           # Port was selected once using secrets.randbelow for the native
           # fixture; keep it stable across subsequent runs. Token auth forces
           # loopback binding. The explicit port also starts gRPC on Linux.
-          emulator-options: -gpu software -no-snapshot -no-boot-anim -camera-back none -writable-system -grpc 63589 -grpc-use-token -feature -VirtioSndCard
+          emulator-options: -gpu software -no-snapshot -no-boot-anim -camera-back none -writable-system -grpc 63589 -grpc-use-token
           pre-emulator-launch-script: |
             pactl info
             ls -l /tmp/gboard-offline-pulse.sock /usr/lib/x86_64-linux-gnu/libpulse.so

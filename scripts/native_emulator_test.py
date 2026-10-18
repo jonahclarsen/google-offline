@@ -57,7 +57,6 @@ def main():
         process = subprocess.Popen([str(sdk / "emulator/emulator"), "-avd", name,
             "-no-window", "-gpu", "software", "-no-snapshot", "-no-boot-anim",
             "-writable-system", "-camera-back", "none", "-memory", "4096", "-cores", "4",
-            "-feature", "-VirtioSndCard",
             "-grpc-use-token", "-grpc", str(settings["grpc_port"]),
             "-port", str(settings["console_port"])], env=env, stdout=log, stderr=subprocess.STDOUT)
         try:

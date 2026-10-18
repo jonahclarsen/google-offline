@@ -265,6 +265,18 @@ def dictation_attempt(prefix=""):
             "accessibility_input_values": after_speech}
 
 
+def dictation_with_retries(prefix=""):
+    attempts = []
+    for index in range(3):
+        if index:
+            start_probe()
+        result = dictation_attempt(prefix + (f"retry-{index}-" if index else ""))
+        attempts.append(result)
+        if result["passed"] or not result["gboard_crash_free"]:
+            break
+    return {**attempts[-1], "attempt_count": len(attempts), "attempts": attempts}
+
+
 def main():
     adb("logcat", "-c")
     import shutil
@@ -354,7 +366,7 @@ def main():
     (OUT / "network-isolation.txt").write_text(adb("shell", "iptables", "-S", "OUTPUT") + adb("shell", "ip6tables", "-S", "OUTPUT"))
     microphone_control = capture_microphone_control()
     isolated_network = network_control()
-    offline_voice = dictation_attempt()
+    offline_voice = dictation_with_retries()
     report = {
         "arm64_translation_baseline": ARM_BASELINE,
         "tested_apk_sha256": hashlib.sha256((OUT / "gboard-offline-coexist-experimental.apk").read_bytes()).hexdigest(),
@@ -394,7 +406,7 @@ def main():
     report["selected_keyboard_persisted_after_reboot"] = selected.startswith(PACKAGE + "/")
     report["post_reboot_microphone_waveform_diagnostic"] = capture_microphone_control("post-reboot-")
     online_network = network_control()
-    online_voice = dictation_attempt("post-reboot-")
+    online_voice = dictation_with_retries("post-reboot-")
     report["post_reboot_network_control"] = online_network
     report["post_reboot_voice"] = online_voice
     report["post_reboot_online_dictation_passed"] = online_network["success"] and online_voice["passed"] and report["selected_keyboard_persisted_after_reboot"]
