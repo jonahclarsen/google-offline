@@ -21,15 +21,19 @@ def adb(*args, check=True):
 
 
 def ui():
-    adb("shell", "uiautomator", "dump", "/sdcard/window.xml")
-    root = ET.fromstring(adb("shell", "cat", "/sdcard/window.xml"))
+    # UiAutomation suppresses other accessibility services while connected.
+    # Prefer the helper's full window tree, including the IME window.
+    root = ET.Element("hierarchy")
     raw = adb("shell", "cat", "/sdcard/Android/data/art.jonah.offlineprobe/files/accessibility.json", check=False)
     try:
         for item in json.loads(raw):
             ET.SubElement(root, "node", item)
+        if len(root):
+            return root
     except (ValueError, TypeError):
         pass
-    return root
+    adb("shell", "uiautomator", "dump", "/sdcard/window.xml")
+    return ET.fromstring(adb("shell", "cat", "/sdcard/window.xml"))
 
 
 def tap(node):

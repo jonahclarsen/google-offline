@@ -28,7 +28,15 @@ jobs:
         with:
           packages: platform-tools
           log-accepted-android-sdk-licenses: false
-          cmdline-tools-version: '14742923'
+          cmdline-tools-version: '15859902'
+      - name: Keep emulator runner on the pinned SDK tools
+        run: |
+          sdk_toolroot="$(dirname "$(dirname "$(command -v sdkmanager)")")"
+          if [[ "$sdk_toolroot" != "$ANDROID_HOME/cmdline-tools/latest" ]]; then
+            rm -rf "$ANDROID_HOME/cmdline-tools/latest"
+            ln -s "$sdk_toolroot" "$ANDROID_HOME/cmdline-tools/latest"
+          fi
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --version
       - name: Install Android build tools
         run: sdkmanager 'build-tools;35.0.0' 'platforms;android-35'
       - name: Install pinned APK download client
@@ -58,7 +66,7 @@ jobs:
       - name: Prepare synthetic microphone audio
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq pulseaudio pulseaudio-utils libpulse-dev espeak-ng
+          sudo apt-get install -y -qq pulseaudio pulseaudio-utils libpulse-dev espeak-ng xvfb libxcb-cursor0 libxkbcommon-x11-0
           pulseaudio --start --exit-idle-time=-1
           pactl load-module module-null-sink sink_name=speech_input
           pactl load-module module-null-sink sink_name=discard_output
@@ -67,6 +75,13 @@ jobs:
           pactl load-module module-native-protocol-unix socket=/tmp/gboard-offline-pulse.sock auth-anonymous=1
           printf '%s\n' 'PULSE_SERVER=unix:/tmp/gboard-offline-pulse.sock' 'QEMU_PA_SERVER=unix:/tmp/gboard-offline-pulse.sock' 'PULSE_SOURCE=speech_input.monitor' 'QEMU_PA_SOURCE=speech_input.monitor' 'PULSE_SINK=discard_output' 'QEMU_PA_SINK=discard_output' >> "$GITHUB_ENV"
           espeak-ng -v en-us -s 135 -w work/hello-world.wav 'hello world'
+          Xvfb -displayfd 3 -screen 0 1080x1920x24 -nolisten tcp 3>work/xvfb-display >work/xvfb.log 2>&1 &
+          for attempt in {1..50}; do
+            [[ -s work/xvfb-display ]] && break
+            sleep 0.1
+          done
+          test -s work/xvfb-display
+          printf 'DISPLAY=:%s\n' "$(cat work/xvfb-display)" >> "$GITHUB_ENV"
       - name: Exercise patched keyboard in Android
         uses: reactivecircus/android-emulator-runner@4c44018e59b437e86cdfc41da381398f93ed8808
         with:
@@ -78,10 +93,12 @@ jobs:
           ram-size: 4096M
           cores: 4
           disable-animations: true
-          emulator-options: -no-window -gpu swiftshader_indirect -no-boot-anim -camera-back none
+          emulator-options: -gpu software -no-snapshot -no-boot-anim -camera-back none
           pre-emulator-launch-script: |
             pactl info
             ls -l /tmp/gboard-offline-pulse.sock /usr/lib/x86_64-linux-gnu/libpulse.so
+            cat "$ANDROID_AVD_HOME/test.ini"
+            grep -Fx 'target=android-${{ matrix.api }}' "$ANDROID_AVD_HOME/test.ini"
             $ANDROID_HOME/emulator/emulator -audio-help || true
           script: python3 scripts/emulator_test.py
       - name: Publish experimental APKs and evidence

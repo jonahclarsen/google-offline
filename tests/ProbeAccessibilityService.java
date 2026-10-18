@@ -13,7 +13,8 @@ import org.json.JSONObject;
 
 /** Test-emulator helper: inspect IME windows, which shell uiautomator omits. */
 public class ProbeAccessibilityService extends AccessibilityService {
-    private long last = 0;
+    private final android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable save = this::snapshot;
 
     @Override public void onServiceConnected() {
         AccessibilityServiceInfo info = getServiceInfo();
@@ -23,7 +24,8 @@ public class ProbeAccessibilityService extends AccessibilityService {
     }
 
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
-        if (android.os.SystemClock.uptimeMillis() - last > 250) snapshot();
+        handler.removeCallbacks(save);
+        handler.postDelayed(save, 100);
     }
 
     @Override public void onInterrupt() {}
@@ -47,10 +49,21 @@ public class ProbeAccessibilityService extends AccessibilityService {
     }
 
     private void snapshot() {
-        last = android.os.SystemClock.uptimeMillis();
         try {
             JSONArray nodes = new JSONArray();
-            for (AccessibilityWindowInfo window : getWindows()) collect(window.getRoot(), nodes, 0);
+            for (AccessibilityWindowInfo window : getWindows()) {
+                AccessibilityNodeInfo root = window.getRoot();
+                if (window.getType() == AccessibilityWindowInfo.TYPE_INPUT_METHOD && root != null) {
+                    Rect bounds = new Rect();
+                    window.getBoundsInScreen(bounds);
+                    JSONObject item = new JSONObject();
+                    item.put("class", "_IME_WINDOW");
+                    item.put("package", string(root.getPackageName()));
+                    item.put("bounds", "["+bounds.left+","+bounds.top+"]["+bounds.right+","+bounds.bottom+"]");
+                    nodes.put(item);
+                }
+                collect(root, nodes, 0);
+            }
             File temporary = new File(getExternalFilesDir(null), "accessibility.tmp");
             try (FileWriter writer = new FileWriter(temporary)) { writer.write(nodes.toString()); }
             temporary.renameTo(new File(getExternalFilesDir(null), "accessibility.json"));
