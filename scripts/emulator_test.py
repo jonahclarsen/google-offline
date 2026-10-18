@@ -87,6 +87,17 @@ def main():
             break
         tap(buttons[0])
         time.sleep(2)
+    # A first IME service startup can finish after showSoftInput was requested.
+    # Refocus the real editor while waiting, rather than treating its absence
+    # after a fixed sleep as a failed keyboard implementation.
+    for _ in range(20):
+        tree = ui()
+        if any(n.attrib.get("package") == PACKAGE and (n.attrib.get("text") == "q" or n.attrib.get("content-desc") == "q") for n in tree.iter("node")):
+            break
+        editor = next((n for n in tree.iter("node") if n.attrib.get("class") == "android.widget.EditText"), None)
+        if editor is not None:
+            tap(editor)
+        time.sleep(2)
     screenshot("keyboard.png")
     tree = ui()
     (OUT / "keyboard-ui.xml").write_text(ET.tostring(tree, encoding="unicode"))
