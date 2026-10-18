@@ -13,8 +13,11 @@ with zipfile.ZipFile('work/probe/unsigned.apk', 'a') as apk:
     apk.write('work/probe/dex/classes.dex', 'classes.dex')
 PY
 "$tools/zipalign" -f 4 work/probe/unsigned.apk work/probe/aligned.apk
-if [[ -f work/signing/gboard-offline.p12 ]]; then
+if [[ -f work/signing/gboard-offline.p12 && -n "${GBOARD_SIGNING_PASSWORD:-}" ]]; then
   "$tools/apksigner" sign --ks work/signing/gboard-offline.p12 --ks-pass env:GBOARD_SIGNING_PASSWORD --out work/probe/probe.apk work/probe/aligned.apk
 else
-  "$tools/apksigner" sign --ks work/x86_64/test-signing.jks --ks-pass pass:android --out work/probe/probe.apk work/probe/aligned.apk
+  if [[ ! -f work/probe/test-signing.jks ]]; then
+    keytool -genkeypair -keystore work/probe/test-signing.jks -storepass android -keypass android -alias offline-probe -keyalg RSA -keysize 2048 -validity 3650 -dname 'CN=Offline Gboard Test Helper'
+  fi
+  "$tools/apksigner" sign --ks work/probe/test-signing.jks --ks-pass pass:android --out work/probe/probe.apk work/probe/aligned.apk
 fi
