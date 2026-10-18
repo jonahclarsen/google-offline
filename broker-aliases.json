@@ -1,0 +1,11 @@
+{
+  "com.google.android.gms": "com.offline.denied.gms",
+  "com.google.android.tts": "com.offline.denied.tts",
+  "com.google.android.as": "com.offline.denied.as",
+  "com.google.android.as.oss": "com.offline.denied.as.oss",
+  "com.google.android.aicore": "com.offline.denied.aicore",
+  "com.google.android.googlequicksearchbox": "com.offline.denied.googlequicksearchbox",
+  "com.google.android.apps.bard": "com.offline.denied.apps.bard",
+  "com.google.android.gsf": "com.offline.denied.gsf",
+  "com.android.vending": "com.offline.vending"
+}

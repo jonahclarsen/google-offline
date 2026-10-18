@@ -4,7 +4,7 @@ import unittest
 import zlib
 from unittest.mock import patch as mock_patch
 from test_manifest_patch import fixture
-from clone_apk import CLONE_PACKAGE, ORIGINAL_PACKAGE, dex_strings, label_manifest, rewrite_dex, trust_clone_signer, CERT_PAYLOAD, DEVELOPMENT_CERT
+from clone_apk import CLONE_PACKAGE, ORIGINAL_PACKAGE, dex_strings, label_manifest, rewrite_dex, trust_clone_signer, CERT_PAYLOAD, DEVELOPMENT_CERT, backup_disabled
 from patch_manifest import pool_strings, u32
 
 
@@ -60,6 +60,12 @@ class CloneTests(unittest.TestCase):
                 self.assertEqual(u32(application, 44), len(strings) - 1)
                 self.assertEqual(application[51], 3)
                 self.assertEqual(u32(application, 52), len(strings) - 1)
+
+    def test_clone_disables_cloud_backup_with_both_string_encodings(self):
+        for utf8 in (True, False):
+            source = fixture(utf8, include_label=True, include_backup=True)[0]
+            self.assertFalse(backup_disabled(source))
+            self.assertTrue(backup_disabled(label_manifest(source)))
 
 
 if __name__ == "__main__":

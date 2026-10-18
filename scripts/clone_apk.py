@@ -101,10 +101,32 @@ def label_manifest(data, label="Gboard Offline"):
                         struct.pack_into("<I", chunk, pos + 8, new_index)
                         chunk[pos + 15] = 3
                         struct.pack_into("<I", chunk, pos + 16, new_index)
+                    if tag == "application" and namespace != 0xffffffff and strings[namespace] == "http://schemas.android.com/apk/res/android" and strings[name] == "allowBackup":
+                        struct.pack_into("<I", chunk, pos + 8, 0xffffffff)
+                        chunk[pos + 15] = 0x12
+                        struct.pack_into("<I", chunk, pos + 16, 0)
         chunks.append(chunk)
     result = bytearray(data[:u16(data, 2)] + b"".join(chunks))
     struct.pack_into("<I", result, 4, len(result))
     return bytes(result)
+
+
+def backup_disabled(data):
+    offset, strings = u16(data, 2), []
+    while offset < len(data):
+        kind, header, size = struct.unpack_from("<HHI", data, offset)
+        chunk = data[offset:offset + size]
+        offset += size
+        if kind == 1:
+            strings = pool_strings(chunk)
+        elif kind == 0x102 and strings[u32(chunk, header + 4)] == "application":
+            start, width, count = struct.unpack_from("<HHH", chunk, header + 8)
+            for index in range(count):
+                pos = header + start + index * width
+                namespace, name = struct.unpack_from("<II", chunk, pos)
+                if namespace != 0xffffffff and strings[namespace] == "http://schemas.android.com/apk/res/android" and strings[name] == "allowBackup":
+                    return chunk[pos + 15] == 0x12 and u32(chunk, pos + 16) == 0
+    return False
 
 
 def clone(source, destination, signing_digest=None):

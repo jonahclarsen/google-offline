@@ -122,6 +122,11 @@ def build(arch):
     cloned_permissions = run(tools / "aapt2", "dump", "permissions", cloned_output)
     if f"package: name='{CLONE_PACKAGE}'" not in cloned_badging or "application-label:'Gboard Offline'" not in cloned_badging or "android.permission.INTERNET" in cloned_permissions:
         raise RuntimeError("Clone package, label, or permission verification failed")
+    with zipfile.ZipFile(output) as base, zipfile.ZipFile(cloned_output) as final:
+        clone_changes = [name for name in final.namelist() if not name.startswith("META-INF/") and (name not in base.namelist() or final.read(name) != base.read(name))]
+        expected_changes = {"AndroidManifest.xml", "resources.arsc", "classes.dex", "classes2.dex", "classes3.dex", "classes4.dex", "classes5.dex", "assets/offline-english-v311.zip"}
+        if set(clone_changes) - expected_changes:
+            raise RuntimeError(f"Unexpected clone payload changes: {clone_changes}")
     (dist / "clone-report.json").write_text(json.dumps({"package": CLONE_PACKAGE, "label": "Gboard Offline", "changed_files_beyond_permission_patch": clone_changes, "internal_trusted_signer_sha256": clone_certificates[0], "offline_bundle": offline_bundle, "sha256": hashlib.sha256(cloned_output.read_bytes()).hexdigest(), "offline_dictation": "NOT VERIFIED", "runtime": "not tested"}, indent=2) + "\n")
     print(json.dumps(report, indent=2))
 
