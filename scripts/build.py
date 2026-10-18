@@ -27,8 +27,13 @@ def build(arch):
     tools = sdk / "build-tools" / "35.0.0"
     original = work / "original.apk"
     if not original.exists():
-        with urllib.request.urlopen(source["url"], timeout=120) as response:
-            original.write_bytes(response.read())
+        print(f"Downloading pinned {arch} APK from {source['source']}", flush=True)
+        if source.get("fetcher") == "apkmirror":
+            from fetch_apkmirror import fetch_apkmirror
+            original.write_bytes(fetch_apkmirror(source["url"]))
+        else:
+            with urllib.request.urlopen(source["url"], timeout=120) as response:
+                original.write_bytes(response.read())
     original_hash = hashlib.sha256(original.read_bytes()).hexdigest()
     if original_hash != source["sha256"]:
         raise RuntimeError("Original APK SHA-256 mismatch")

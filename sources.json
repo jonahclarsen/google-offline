@@ -1,14 +1,16 @@
 {
   "arm64": {
-    "url": "https://gitlab.opengapps.org/opengapps/arm64/-/raw/84e304e0643be72daebb5ebfe80c5f4e8a8a6e6c/app/com.google.android.inputmethod.latin/23/nodpi/80959522.apk",
-    "sha256": "c7732bebec8b016fbc8bec8a9e882420bbc3292e011949287d9596171a41f25b",
-    "bytes": 81957935,
-    "source": "Open GApps source archive (historical test fixture)"
+    "url": "https://www.apkmirror.com/apk/google-inc/gboard/gboard-the-google-keyboard-17-3-3-902587967-release/gboard-the-google-keyboard-17-3-3-902587967-release-arm64-v8a-android-apk-download/",
+    "sha256": "311f198afd40ff9ba610ea6a735fa34ec7e3892f16d7e21625d25f67425210fa",
+    "bytes": 77690734,
+    "source": "APKMirror Google LLC standalone APK",
+    "fetcher": "apkmirror"
   },
   "x86_64": {
-    "url": "https://gitlab.opengapps.org/opengapps/x86_64/-/raw/5cbe66c16d4bf61d13e2e4e15f245d838556aca2/app/com.google.android.inputmethod.latin/23/nodpi/80959524.apk",
-    "sha256": "a776b95f6827e0e213fb9044fd3154ad694045f6cf68ca4ebfb2c14feccdbc84",
-    "bytes": 86639645,
-    "source": "Open GApps source archive (historical test fixture)"
+    "url": "https://www.apkmirror.com/apk/google-inc/gboard/gboard-the-google-keyboard-17-3-3-902587967-release/gboard-the-google-keyboard-17-3-3-902587967-release-x86_64-android-apk-download/",
+    "sha256": "15aed14d7b374c40783f65e74e6fa4e78355d0e64d76b6901a94399f62e7071c",
+    "bytes": 81934157,
+    "source": "APKMirror Google LLC standalone APK",
+    "fetcher": "apkmirror"
   }
 }

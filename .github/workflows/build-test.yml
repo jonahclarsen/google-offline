@@ -23,6 +23,8 @@ jobs:
           log-accepted-android-sdk-licenses: false
       - name: Install Android build tools
         run: sdkmanager 'build-tools;35.0.0' 'platforms;android-35'
+      - name: Install pinned APK download client
+        run: python3 -m pip install -r requirements-build.txt
       - name: Verify Google signatures and patch APKs
         run: |
           python3 scripts/build.py arm64

@@ -6,7 +6,7 @@ Reproducible experimental APK patch and emulator evidence using free standard Gi
 
 ## What the workflow checks
 
-1. Downloads pinned ARM64 and x86-64 APKs from the Open GApps source archive, a community Google-app distribution project. These are historical fixtures, not a claim to provide the newest Gboard.
+1. Downloads pinned ARM64 and x86-64 Gboard 17.3.3 standalone APKs from APKMirror. These are May 2026 releases selected because both architectures have complete APKs. Downloading uses the normal page flow with a pinned browser-compatible HTTP client; downloaded content must still pass Google's signature check.
 2. Verifies each file's SHA-256 and Android APK signature against Google's certificate (`f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83`). A compromised mirror cannot substitute an unsigned or differently signed APK without failing this check.
 3. Removes the INTERNET declaration directly from binary Android XML. Keeps every other payload byte intact, including resources, DEX, and native libraries. Removes old signatures, aligns, and signs with an ephemeral test key.
 4. Verifies the resulting signature, alignment, permission list, and the absence of unexpected payload changes.
